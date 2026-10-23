@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07090d">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Ὁρμή">
+  <meta name="description" content="움직이는 배경, 위젯, 폴더와 앱 보관함을 갖춘 태블릿·휴대폰용 맞춤 런처">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/launcher.css">
+  <link rel="stylesheet" href="css/widgets.css">
+  <title>Ὁρμή</title>
+</head>
+<body class="launcher">
+  <div id="bg" aria-hidden="true">
+    <canvas id="bg-haze"></canvas>
+    <div id="bg-image"></div>
+    <video id="bg-video" muted loop playsinline webkit-playsinline preload="auto" disablepictureinpicture></video>
+    <img id="bg-anim" alt="">
+    <canvas id="bg-still"></canvas>
+    <canvas id="bg-canvas"></canvas>
+    <div id="bg-shade"></div>
+    <div id="bg-grain"></div>
+  </div>
+
+  <div class="shell" id="shell">
+    <header class="topbar">
+      <div class="brand"><img src="icons/icon-192.png" alt="" width="30" height="30"><span class="brand-name">Ὁρμή</span><span class="brand-sub">HORMĒ</span></div>
+      <div class="top-actions normal-only">
+        <div class="live-pill" aria-hidden="true"><span class="live-dot"></span><span id="top-time"></span><span class="sep">·</span><span id="top-day"></span></div>
+        <a class="pill-btn studio-link" href="studio.html" aria-label="디자인 스튜디오"><svg class="g" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18h1.4c1.7 0 2.5-1.9 1.4-3.1-.9-1 .1-2.6 1.4-2.6H18a3 3 0 0 0 3-3A9 9 0 0 0 12 3Z"/><circle cx="7.5" cy="11" r="1.15" fill="currentColor" stroke="none"/><circle cx="10" cy="7.2" r="1.15" fill="currentColor" stroke="none"/><circle cx="14.5" cy="7.2" r="1.15" fill="currentColor" stroke="none"/></svg><span>디자인</span></a>
+        <button type="button" class="icon-btn" id="btn-search" aria-label="빠른 검색 (⌘K)" title="빠른 검색 (⌘K)"><svg class="g" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.8 4.8"/></svg></button>
+        <button type="button" class="icon-btn" id="btn-edit" aria-label="홈 화면 편집" title="홈 화면 편집"><svg class="g" viewBox="0 0 24 24"><path d="M4 20h4.2L19.4 8.8a2.2 2.2 0 0 0 0-3.1l-1.1-1.1a2.2 2.2 0 0 0-3.1 0L4 15.8Z"/><path d="m13.5 6.5 4 4"/></svg></button>
+        <button type="button" class="icon-btn" id="btn-settings" aria-label="설정" title="설정"><svg class="g" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></svg></button>
+      </div>
+      <div class="top-actions edit-only">
+        <button type="button" class="icon-btn" id="btn-undo" aria-label="되돌리기" title="되돌리기 (⌘Z)" hidden><svg class="g" viewBox="0 0 24 24"><path d="M9 14.5 4 9.5l5-5"/><path d="M4 9.5h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+        <button type="button" class="pill-btn" id="btn-add"><svg class="g" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>추가</span></button>
+        <button type="button" class="pill-btn" id="btn-pages"><svg class="g" viewBox="0 0 24 24"><rect x="7.5" y="3" width="12.5" height="15.5" rx="2"/><path d="M4.5 7v11.5A2.5 2.5 0 0 0 7 21h9.5"/></svg><span>페이지</span></button>
+        <button type="button" class="pill-btn primary" id="btn-done">완료</button>
+      </div>
+    </header>
+
+    <main class="viewport" id="viewport" aria-label="홈 화면">
+      <div class="track" id="track">
+        <section class="page library" aria-label="앱 보관함"></section>
+      </div>
+    </main>
+
+    <footer class="bottom">
+      <nav class="dots" id="dots" aria-label="페이지"></nav>
+      <div class="dock" id="dock">
+        <div class="dock-apps" id="dock-apps" data-container="dock"></div>
+        <span class="dock-rule" aria-hidden="true"></span>
+        <button type="button" class="dock-lib" aria-label="앱 보관함"><svg class="g" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.8"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.8"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.8"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.8"/></svg></button>
+      </div>
+    </footer>
+  </div>
+  <div id="drag-layer" aria-hidden="true"></div>
+  <noscript><p style="color:#fff;padding:24px">Ὁρμή를 쓰려면 JavaScript가 필요해요.</p></noscript>
+
+  <script src="js/core/util.js" defer></script>
+  <script src="js/core/glyphs.js" defer></script>
+  <script src="js/core/catalog.js" defer></script>
+  <script src="js/widgets/types.js" defer></script>
+  <script src="js/core/schema.js" defer></script>
+  <script src="js/core/store.js" defer></script>
+  <script src="js/core/assets.js" defer></script>
+  <script src="js/core/ui.js" defer></script>
+  <script src="js/core/theme.js" defer></script>
+  <script src="js/core/power.js" defer></script>
+  <script src="js/core/launch.js" defer></script>
+  <script src="js/core/backup.js" defer></script>
+  <script src="js/widgets/weather.js" defer></script>
+  <script src="js/widgets/editor.js" defer></script>
+  <script src="js/launcher/home.js" defer></script>
+  <script src="js/launcher/folders.js" defer></script>
+  <script src="js/launcher/pager.js" defer></script>
+  <script src="js/launcher/drag.js" defer></script>
+  <script src="js/launcher/library.js" defer></script>
+  <script src="js/launcher/sheets.js" defer></script>
+  <script src="js/launcher/bg.js" defer></script>
+  <script src="js/launcher/standby.js" defer></script>
+  <script src="js/launcher/main.js" defer></script>
+</body>
+</html>

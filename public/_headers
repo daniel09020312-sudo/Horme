@@ -1,0 +1,3 @@
+# Cloudflare Pages / Netlify: always revalidate the service worker so updates arrive quickly
+/sw.js
+  Cache-Control: no-cache

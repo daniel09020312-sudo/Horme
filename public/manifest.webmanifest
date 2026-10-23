@@ -1,0 +1,25 @@
+{
+  "id": "./",
+  "name": "Ὁρμή — Custom Launcher",
+  "short_name": "Ὁρμή",
+  "description": "움직이는 배경, 위젯, 폴더와 앱 보관함을 갖춘 맞춤 런처",
+  "lang": "ko-KR",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#07090d",
+  "theme_color": "#07090d",
+  "categories": ["productivity", "utilities", "personalization"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "빠른 검색", "url": "./?open=search", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "디자인 스튜디오", "url": "./studio.html", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "위젯 추가", "url": "./?open=widgets", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

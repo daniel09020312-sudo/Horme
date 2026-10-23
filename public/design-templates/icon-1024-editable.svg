@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- KINET Home editable icon template. Replace or add paths inside this group. -->
+  <defs><linearGradient id="glass" x2="1" y2="1"><stop stop-color="#343f56"/><stop offset="1" stop-color="#11192a"/></linearGradient></defs>
+  <rect x="0" y="0" width="1024" height="1024" rx="220" fill="url(#glass)"/>
+  <rect x="8" y="8" width="1008" height="1008" rx="212" fill="none" stroke="#8190ac" stroke-width="10" opacity=".55"/>
+  <g id="YOUR_ARTWORK" stroke="#e0e5f9" stroke-width="35" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <circle cx="512" cy="512" r="195"/>
+    <path d="M512 410v204 M410 512h204"/>
+  </g>
+</svg>

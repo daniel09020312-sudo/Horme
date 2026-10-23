@@ -1,0 +1,18 @@
+[Ὁρμή / 아이콘 예시]
+1024x1024 square app icon for a note-taking app. Quiet editorial graphic design,
+a single confident pen-nib silhouette on charcoal with one muted ivory accent.
+No lettering, no fake phone mockup, no gradients added for decoration,
+no unnecessary reflections. Centered, legible at 48px. PNG artwork only.
+
+[Ὁρμή / 위젯 예시]
+2:1 horizontal background art for a clock/notes widget. Contemporary printmaking,
+subtle warm-paper grain, minimal geometry only in the far right 30%.
+Keep left 65% completely clear for HTML typography overlay. 1600x800 image,
+no clock hands, no words, no interface screenshot, no border around the image.
+
+[Ὁρμή / 배경 영상 예시]
+16:10 seamless ambient video loop for tablet home launcher. Static camera;
+restrained architectural shadow in charcoal, pale grey and muted blue.
+Slow continuous soft light movement, no cuts, no transitions, no camera motion.
+10-second seamless loop, 1920x1200 target, mute audio, H.264 MP4.
+No text, fake UI or oversaturated neon.

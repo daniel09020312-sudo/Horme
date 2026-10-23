@@ -1,0 +1,32 @@
+{
+  "format": "HORME_INTERFACE_DESIGN",
+  "version": 1,
+  "note": "Ὁρμή 디자인 스튜디오 ⑥단계에서 불러오는 예시 파일",
+  "theme": "aurora",
+  "wallpaper": "",
+  "wallpaperShade": 0.4,
+  "designAccent": "#92e0d3",
+  "designAccent2": "#c8a9ef",
+  "iconRadius": 30,
+  "heroTagline": "나만의 공간, 나만의 움직임.",
+  "motion": true,
+  "icons": [],
+  "dockStyle": "solid",
+  "layoutStyle": "spacious",
+  "widgetSlots": [
+    {
+      "type": "focus",
+      "title": "TODAY’S FOCUS",
+      "text": ""
+    },
+    {
+      "type": "motion",
+      "title": "AMBIENT SPACE",
+      "text": ""
+    }
+  ],
+  "videoFit": "cover",
+  "videoSpeed": 1,
+  "videoDim": 0.45,
+  "videoUrl": ""
+}
