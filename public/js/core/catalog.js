@@ -63,22 +63,34 @@
     A("ytmusic", "YouTube Music", "play2", "엔터테인먼트", "youtubemusic://", "https://music.youtube.com/", ["유튜브뮤직", "유튭뮤직", "음악"]),
     A("gemini", "Gemini", "sparkle", "생산성", "", "https://gemini.google.com/", ["제미나이", "ai", "구글 ai"]),
   ];
-  /* Apps that ship with the launcher: Google first, plus the essentials without a Google version. */
+  const google = (id) => GOOGLE.find((a) => a.id === id);
+  const ADDED = {
+    kakaotalk: A("kakaotalk", "카카오톡", "bubbleDots", "소셜", "kakaotalk://", "", ["카톡", "kakao"]),
+    claude: A("claude", "Claude", "sparkle", "생산성", "claude://", "https://claude.ai/", ["클로드", "ai", "anthropic"]),
+    studyplanner: A("studyplanner", "공부방 플래너", "calendar", "공부", "", "", ["공부방", "플래너", "스터디 플래너", "study planner"]),
+    riroschool: A("riroschool", "리로스쿨", "cap", "공부", "", "https://riroschool.kr/", ["리로", "학교", "riro"]),
+    notability: A("notability", "Notability", "edit", "공부", "", "", ["노타빌리티", "필기", "노트"]),
+    bose: A("bose", "Bose", "headphones", "엔터테인먼트", "", "", ["보스", "헤드폰", "이어폰"]),
+    polaris: A("polaris", "Polaris Viewer", "doc", "생산성", "", "https://www.polarisoffice.com/", ["폴라리스", "폴라리스 오피스", "polaris office", "한글", "hwp", "뷰어"]),
+    vflat: A("vflat", "vFlat Scan", "aperture", "생산성", "", "", ["브이플랫", "스캔", "스캐너", "vflat"]),
+    vpn: A("vpn", "VPN", "lock", "유틸리티", "", "", ["브이피엔"]),
+  };
+  /* Apps that ship with the launcher (the owner's own set, 2.3). */
   H.DEFAULT_APPS = [
-    ...GOOGLE,
-    ...["youtube", "drive", "docs", "sheets", "classroom", "shortcuts", "goodnotes", "notion", "chatgpt", "spotify", "soundcloud",
-      "interchange", "figma", "procreate", "discord", "pinterest", "camera", "calculator", "clock", "messages", "appstore", "settings"].map(v1),
+    v1("settings"), ADDED.studyplanner, ADDED.riroschool, v1("photos"), v1("camera"), ADDED.kakaotalk, v1("appstore"), ADDED.bose,
+    v1("chatgpt"), google("chrome"), v1("classroom"), ADDED.claude, v1("docs"), v1("drive"), v1("sheets"), google("slides"),
+    ADDED.notability, ADDED.polaris, v1("soundcloud"), ADDED.vflat, ADDED.vpn, v1("youtube"), google("ytmusic"),
   ];
 
   /* More apps people can add from the "앱 추가" catalog. */
   H.EXTRA_APPS = [
-    ...["safari", "music", "photos", "files", "calendar", "notes", "maps", "mail", "books", "meet", "freeform"].map(v1),
-    A("kakaotalk", "카카오톡", "bubbleDots", "소셜", "kakaotalk://", "", ["카톡", "kakao"]),
+    ...GOOGLE.filter((a) => !H.DEFAULT_APPS.includes(a)),
+    ...["shortcuts", "goodnotes", "notion", "spotify", "interchange", "figma", "procreate", "discord", "pinterest", "calculator", "clock", "messages",
+      "safari", "music", "files", "calendar", "notes", "maps", "mail", "books", "meet", "freeform"].map(v1),
     A("instagram", "Instagram", "aperture", "소셜", "instagram://", "https://www.instagram.com/", ["인스타", "인스타그램"]),
     A("x", "X", "bubble", "소셜", "twitter://", "https://x.com/", ["트위터", "twitter"]),
     A("telegram", "Telegram", "plane", "소셜", "tg://", "https://web.telegram.org/", ["텔레그램"]),
     A("zoom", "Zoom", "videoCam", "소셜", "zoomus://", "https://zoom.us/", ["줌"]),
-    A("claude", "Claude", "sparkle", "생산성", "", "https://claude.ai/", ["클로드", "ai"]),
     A("naver", "네이버", "search", "유틸리티", "naversearchapp://", "https://m.naver.com/", ["naver", "검색"]),
     A("navermap", "네이버 지도", "location", "생활", "nmap://", "https://map.naver.com/", ["네이버맵", "길찾기"]),
     A("kakaomap", "카카오맵", "map", "생활", "kakaomap://", "https://map.kakao.com/", ["카카오지도", "길찾기"]),
@@ -117,9 +129,10 @@
   /* Apple app → Google counterpart ("구글 앱으로 바꾸기"). */
   H.GOOGLE_SWAP = { safari: "chrome", mail: "gmail", calendar: "gcalendar", photos: "gphotos", maps: "gmaps", notes: "gkeep", files: "drive", music: "ytmusic", meet: "gmeet" };
 
-  /* Starting home screen. Dock apps are not repeated on pages. */
+  /* Starting home screen. Dock apps are not repeated on pages; { folder, apps } makes a folder.
+     Apps in DEFAULT_APPS that are not placed here start in the library (Google Sheets, VPN). */
   H.DEFAULT_LAYOUT = {
-    dock: ["chrome", "gmail", "youtube", "gphotos", "drive", "gemini"],
+    dock: ["chrome", "youtube", "settings"],
     pages: [
       {
         widgets: [
@@ -127,8 +140,13 @@
           { type: "focus", size: "s" },
           { type: "ambient", size: "s" },
         ],
-        apps: ["gcalendar", "gkeep", "docs", "sheets", "slides", "classroom", "gmaps", "gtranslate",
-          "goodnotes", "notion", "google", "gmeet", "ytmusic", "shortcuts", "interchange", "clock"],
+        apps: [
+          "studyplanner", "kakaotalk", "chatgpt", "claude",
+          { folder: "교육", apps: ["classroom", "riroschool", "notability"] },
+          { folder: "생산성", apps: ["docs", "drive", "slides", "polaris", "vflat", "appstore"] },
+          { folder: "음악", apps: ["ytmusic", "soundcloud", "bose"] },
+          { folder: "사진", apps: ["photos", "camera"] },
+        ],
       },
       {
         widgets: [
@@ -137,7 +155,7 @@
           { type: "weather", size: "s" },
           { type: "dday", size: "s" },
         ],
-        apps: ["figma", "procreate", "pinterest", "discord", "chatgpt", "spotify", "soundcloud", "camera"],
+        apps: [],
       },
     ],
   };

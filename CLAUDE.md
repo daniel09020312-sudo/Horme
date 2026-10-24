@@ -14,6 +14,6 @@
 - iPad touch: never replace the element under a finger mid-gesture (toggle classes/badges in place); the drag session captures the pointer on `<body>`. A second finger during a drag adds icons to the stack (`addByTap`).
 - Category stages (`js/launcher/stages.js`) animate only while open; anything continuous there must stop in saver mode / motion off.
 - Design packs (`js/core/pack.js`): app matching = device apps → catalog (`H.CATALOG()`) → new shortcut. Keep the AI prompt (`pack.prompt`) and the documented format in `시작하기.html#pack` in sync.
-- App ids from v1 must stay resolvable (`H.V1_APPS`); default apps are Google apps (`H.DEFAULT_LAYOUT`).
+- App ids from v1 must stay resolvable (`H.V1_APPS`). The starting set is the owner's own apps (`H.DEFAULT_APPS`, 23 apps) arranged by `H.DEFAULT_LAYOUT` (page items may be `{ folder, apps }`); every other app stays addable via `H.EXTRA_APPS`. Only add an app URL scheme to the catalog when it is documented — a wrong scheme shows an iOS error alert.
 - UI text is Korean, friendly 해요체. Keep touch targets ≥ 44px.
 - Never commit personal data (real names, contact info, private URLs).

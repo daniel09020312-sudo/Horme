@@ -44,6 +44,7 @@
     const apps = {};
     H.DEFAULT_APPS.forEach((c, i) => (apps[c.id] = makeApp(c, i)));
     const widgets = {};
+    const folders = {};
     const pages = H.DEFAULT_LAYOUT.pages.map((p) => {
       const items = [];
       p.widgets.forEach((spec) => {
@@ -51,13 +52,20 @@
         widgets[w.id] = w;
         items.push("w:" + w.id);
       });
-      p.apps.forEach((a) => apps[a] && items.push("a:" + a));
+      p.apps.forEach((a) => {
+        if (typeof a === "string") return apps[a] && items.push("a:" + a);
+        const ids = (a.apps || []).filter((id) => apps[id]);
+        if (!ids.length) return;
+        const id = H.uid("f");
+        folders[id] = { id, name: a.folder || "폴더", apps: ids };
+        items.push("f:" + id);
+      });
       return { id: H.uid("p"), items };
     });
     return {
       v: 2,
       apps,
-      folders: {},
+      folders,
       widgets,
       pages,
       dock: H.DEFAULT_LAYOUT.dock.slice(),
@@ -339,7 +347,7 @@
 
     if (untouched) {
       // keep the fresh default pages (built in defaults()) but swap page-1 widgets for the user's
-      const defPage1 = out.pages[0].items.filter((k) => k.startsWith("a:"));
+      const defPage1 = out.pages[0].items.filter((k) => k.startsWith("a:") || k.startsWith("f:"));
       Object.keys(out.widgets).forEach((id) => {
         if (!out.pages[0].items.includes("w:" + id)) widgets[id] = out.widgets[id];
       });
@@ -353,6 +361,7 @@
       out.dock = H.DEFAULT_LAYOUT.dock.filter((id) => apps[id]);
     } else {
       out.widgets = widgets;
+      out.folders = {}; // the user's own v1 arrangement: no default folders
       out.pages = [
         { id: H.uid("p"), items: ["w:" + hero.id, ...widgetKeys, ...sorted(0).map((id) => "a:" + id)] },
         { id: H.uid("p"), items: sorted(1).map((id) => "a:" + id) },

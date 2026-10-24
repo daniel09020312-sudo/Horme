@@ -2,7 +2,7 @@
 
 iPad · iPhone · Android에서 쓰는 맞춤 홈 화면 **웹 앱(PWA)**.
 움직이는 배경, 위젯 13종, 폴더, 앱 보관함, 초성 검색, 디자인 스튜디오, 디자인 팩(파일·AI 답 하나로 한 번에)을 갖췄어요.
-기본 앱은 구글 앱(Chrome · Gmail · Google 캘린더 · Keep · 포토 · 지도 …)이에요.
+기본 앱 구성(처음 열 때·모두 초기화)은 `js/core/catalog.js`의 `H.DEFAULT_APPS` / `H.DEFAULT_LAYOUT`(폴더 포함)에 있어요.
 기기의 진짜 홈 화면을 바꾸지는 않아요 — Ὁρμή를 열었을 때 그 안에서 동작해요.
 
 **사용법은 [`public/시작하기.html`](public/시작하기.html)** 에 모두 있어요.
