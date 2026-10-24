@@ -10,8 +10,8 @@
 
   const A = (id, name, glyph, category, app, web, aliases = []) => ({ id, name, glyph, category, app, web, aliases });
 
-  /* Apps that ship with the launcher (ids are kept from v1 so saved data maps 1:1). */
-  H.DEFAULT_APPS = [
+  /* Apps of the v1 era, in their original order — the v1 → v2 migration relies on this list. */
+  H.V1_APPS = [
     A("safari", "Safari", "compass", "유틸리티", "x-safari-https://www.google.com", "https://www.google.com", ["사파리", "브라우저", "인터넷", "웹"]),
     A("music", "음악", "music", "엔터테인먼트", "music://", "https://music.apple.com/", ["music", "애플뮤직", "노래"]),
     A("photos", "사진", "photo", "크리에이티브", "photos-redirect://", "https://www.icloud.com/photos/", ["photos", "갤러리", "앨범"]),
@@ -46,30 +46,44 @@
     A("freeform", "Freeform", "canvas", "크리에이티브", "", "", ["프리폼", "화이트보드"]),
     A("settings", "Ὁρμή 설정", "gear", "유틸리티", "horme://settings", "", ["설정", "settings", "호르메"]),
   ];
+  const v1 = (id) => H.V1_APPS.find((a) => a.id === id);
+
+  /* Google apps (app = the app's URL scheme on iPhone/iPad, web = fallback). */
+  const GOOGLE = [
+    A("chrome", "Chrome", "globe", "유틸리티", "googlechrome://", "https://www.google.com/", ["크롬", "브라우저", "구글크롬", "인터넷", "웹"]),
+    A("google", "Google", "search", "유틸리티", "", "https://www.google.com/", ["구글", "검색", "구글검색"]),
+    A("gmail", "Gmail", "mail", "생산성", "googlegmail://", "https://mail.google.com/", ["지메일", "구글메일", "메일", "이메일"]),
+    A("gcalendar", "Google 캘린더", "calendar", "생산성", "googlecalendar://", "https://calendar.google.com/", ["구글캘린더", "캘린더", "달력", "일정", "google calendar"]),
+    A("gkeep", "Google Keep", "bulb", "생산성", "", "https://keep.google.com/", ["킵", "구글킵", "구글 메모", "메모", "keep"]),
+    A("slides", "Google Slides", "slides", "생산성", "googleslides://", "https://slides.google.com/", ["구글슬라이드", "슬라이드", "프레젠테이션", "발표"]),
+    A("gphotos", "Google 포토", "photo", "크리에이티브", "googlephotos://", "https://photos.google.com/", ["구글포토", "포토", "사진", "google photos"]),
+    A("gmaps", "Google 지도", "location", "생활", "comgooglemaps://", "https://maps.google.com/", ["구글맵", "구글지도", "지도", "google maps"]),
+    A("gtranslate", "Google 번역", "translate", "공부", "googletranslate://", "https://translate.google.com/", ["구글번역", "번역", "google translate"]),
+    A("gmeet", "Google Meet", "videoCam", "소셜", "", "https://meet.google.com/", ["구글미트", "미트", "화상회의"]),
+    A("ytmusic", "YouTube Music", "play2", "엔터테인먼트", "youtubemusic://", "https://music.youtube.com/", ["유튜브뮤직", "유튭뮤직", "음악"]),
+    A("gemini", "Gemini", "sparkle", "생산성", "", "https://gemini.google.com/", ["제미나이", "ai", "구글 ai"]),
+  ];
+  /* Apps that ship with the launcher: Google first, plus the essentials without a Google version. */
+  H.DEFAULT_APPS = [
+    ...GOOGLE,
+    ...["youtube", "drive", "docs", "sheets", "classroom", "shortcuts", "goodnotes", "notion", "chatgpt", "spotify", "soundcloud",
+      "interchange", "figma", "procreate", "discord", "pinterest", "camera", "calculator", "clock", "messages", "appstore", "settings"].map(v1),
+  ];
 
   /* More apps people can add from the "앱 추가" catalog. */
   H.EXTRA_APPS = [
+    ...["safari", "music", "photos", "files", "calendar", "notes", "maps", "mail", "books", "meet", "freeform"].map(v1),
     A("kakaotalk", "카카오톡", "bubbleDots", "소셜", "kakaotalk://", "", ["카톡", "kakao"]),
     A("instagram", "Instagram", "aperture", "소셜", "instagram://", "https://www.instagram.com/", ["인스타", "인스타그램"]),
     A("x", "X", "bubble", "소셜", "twitter://", "https://x.com/", ["트위터", "twitter"]),
     A("telegram", "Telegram", "plane", "소셜", "tg://", "https://web.telegram.org/", ["텔레그램"]),
     A("zoom", "Zoom", "videoCam", "소셜", "zoomus://", "https://zoom.us/", ["줌"]),
-    A("gmeet", "Google Meet", "videoCam", "소셜", "", "https://meet.google.com/", ["구글미트", "미트"]),
-    A("gmail", "Gmail", "mail", "생산성", "googlegmail://", "https://mail.google.com/", ["지메일", "구글메일"]),
-    A("gcalendar", "Google 캘린더", "calendar", "생산성", "googlecalendar://", "https://calendar.google.com/", ["구글캘린더"]),
-    A("gphotos", "Google 포토", "photo", "크리에이티브", "googlephotos://", "https://photos.google.com/", ["구글포토"]),
-    A("chrome", "Chrome", "globe", "유틸리티", "googlechrome://", "https://www.google.com/", ["크롬", "브라우저"]),
-    A("google", "Google", "search", "유틸리티", "", "https://www.google.com/", ["구글", "검색"]),
-    A("gtranslate", "Google 번역", "translate", "공부", "googletranslate://", "https://translate.google.com/", ["구글번역", "번역"]),
-    A("gmaps", "Google 지도", "location", "생활", "comgooglemaps://", "https://maps.google.com/", ["구글맵", "구글지도"]),
-    A("gemini", "Gemini", "sparkle", "생산성", "", "https://gemini.google.com/", ["제미나이", "ai"]),
     A("claude", "Claude", "sparkle", "생산성", "", "https://claude.ai/", ["클로드", "ai"]),
     A("naver", "네이버", "search", "유틸리티", "naversearchapp://", "https://m.naver.com/", ["naver", "검색"]),
     A("navermap", "네이버 지도", "location", "생활", "nmap://", "https://map.naver.com/", ["네이버맵", "길찾기"]),
     A("kakaomap", "카카오맵", "map", "생활", "kakaomap://", "https://map.kakao.com/", ["카카오지도", "길찾기"]),
     A("papago", "파파고", "translate", "공부", "", "https://papago.naver.com/", ["번역", "papago"]),
     A("webtoon", "네이버 웹툰", "book", "엔터테인먼트", "", "https://comic.naver.com/", ["웹툰"]),
-    A("ytmusic", "YouTube Music", "play2", "엔터테인먼트", "youtubemusic://", "https://music.youtube.com/", ["유튜브뮤직", "유튭뮤직"]),
     A("melon", "멜론", "music", "엔터테인먼트", "", "https://www.melon.com/", ["melon", "음악"]),
     A("netflix", "Netflix", "film", "엔터테인먼트", "nflx://", "https://www.netflix.com/", ["넷플릭스", "넷플"]),
     A("disney", "Disney+", "star", "엔터테인먼트", "", "https://www.disneyplus.com/", ["디즈니플러스", "디즈니"]),
@@ -88,11 +102,15 @@
     A("baemin", "배달의민족", "food", "생활", "", "https://www.baemin.com/", ["배민", "배달"]),
   ];
 
-  H.catalogById = (id) => H.DEFAULT_APPS.find((a) => a.id === id) || H.EXTRA_APPS.find((a) => a.id === id) || null;
+  H.catalogById = (id) => H.DEFAULT_APPS.find((a) => a.id === id) || H.EXTRA_APPS.find((a) => a.id === id) || v1(id) || null;
+  H.CATALOG = () => [...H.DEFAULT_APPS, ...H.EXTRA_APPS];
+
+  /* Apple app → Google counterpart ("구글 앱으로 바꾸기"). */
+  H.GOOGLE_SWAP = { safari: "chrome", mail: "gmail", calendar: "gcalendar", photos: "gphotos", maps: "gmaps", notes: "gkeep", files: "drive", music: "ytmusic", meet: "gmeet" };
 
   /* Starting home screen. Dock apps are not repeated on pages. */
   H.DEFAULT_LAYOUT = {
-    dock: ["safari", "music", "photos", "files", "chatgpt", "youtube"],
+    dock: ["chrome", "gmail", "youtube", "gphotos", "drive", "gemini"],
     pages: [
       {
         widgets: [
@@ -100,8 +118,8 @@
           { type: "focus", size: "s" },
           { type: "ambient", size: "s" },
         ],
-        apps: ["calendar", "notes", "goodnotes", "notion", "drive", "docs", "sheets", "classroom",
-          "maps", "shortcuts", "spotify", "soundcloud", "interchange", "clock", "mail", "appstore"],
+        apps: ["gcalendar", "gkeep", "docs", "sheets", "slides", "classroom", "gmaps", "gtranslate",
+          "goodnotes", "notion", "google", "gmeet", "ytmusic", "shortcuts", "interchange", "clock"],
       },
       {
         widgets: [
@@ -110,7 +128,7 @@
           { type: "weather", size: "s" },
           { type: "dday", size: "s" },
         ],
-        apps: ["figma", "procreate", "pinterest", "freeform", "discord", "messages", "meet", "books"],
+        apps: ["figma", "procreate", "pinterest", "discord", "chatgpt", "spotify", "soundcloud", "camera"],
       },
     ],
   };

@@ -5,6 +5,7 @@
   const S = () => H.store.state;
   const esc = H.esc;
   const STEPS = [
+    ["pack", "한 번에 적용", "디자인 팩 · AI", "layers"],
     ["bg", "배경", "사진 · 영상 · 움직임", "image"],
     ["icons", "아이콘", "앱마다 이미지 · 기호", "grid"],
     ["theme", "테마", "색 · 글꼴 · 스타일", "palette"],
@@ -17,7 +18,8 @@
     ["ipad-p", "iPad 세로", 820, 1180, "tablet"],
     ["phone", "휴대폰", 390, 844, "phone"],
   ];
-  let step = STEPS.some((s) => s[0] === H.params.get("step")) ? H.params.get("step") : "bg";
+  let step = STEPS.some((s) => s[0] === H.params.get("step")) ? H.params.get("step") : "pack";
+  const packState = { wish: "", mode: "svg", scope: "home" };
   let selectedApp = "";
   let device = window.innerWidth < 700 ? "phone" : window.innerHeight > window.innerWidth ? "ipad-p" : "ipad-l";
   let promptState = { type: "icon", style: "glass", color: "theme", subject: "", lang: "en", noText: true, apps: "" };
@@ -53,7 +55,7 @@
     history.replaceState(null, "", `studio.html?step=${k}`);
   }
 
-  const EN = ["BACKGROUND", "ICONS", "THEME", "WIDGETS", "AI PROMPTS", "BACKUP"];
+  const EN = ["ALL IN ONE", "BACKGROUND", "ICONS", "THEME", "WIDGETS", "AI PROMPTS", "BACKUP"];
   const head = (n, title, lead) => `<header class="st-head"><p class="st-over">STEP ${H.pad(n)} · ${EN[n - 1]}</p><h1>${title}</h1><p class="lead">${lead}</p></header>`;
   const range = (id, label, value, min, max, step = 1, unit = "%", hint = "") =>
     `<label class="st-range"><span><b>${label}</b>${hint ? `<small>${hint}</small>` : ""}</span><output data-out="${id}">${value}${unit}</output><input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${value}"></label>`;
@@ -75,7 +77,7 @@
     ];
     const vInfo = vid && b.mode === "video" ? `<div class="st-file">${H.svg("video")}<span><b>${esc(vid.name || "배경 영상")}</b><small>${H.bytes(vid.size)} · 이 기기에 저장됨</small></span></div>` : b.videoUrl ? `<div class="st-file">${H.svg("link")}<span><b>웹 영상 주소</b><small>${esc(b.videoUrl.slice(0, 70))}</small></span></div>` : "";
     const aInfo = vid && b.mode === "animated" ? `<div class="st-file">${H.svg("sparkle")}<span><b>${esc(vid.name || "움직이는 이미지")}</b><small>${H.bytes(vid.size)}</small></span></div>` : "";
-    return `${head(1, "배경", "홈 화면 뒤에 깔리는 배경을 골라요. 사진·영상은 서버로 보내지 않고 이 기기에만 저장돼요.")}
+    return `${head(2, "배경", "홈 화면 뒤에 깔리는 배경을 골라요. 사진·영상은 서버로 보내지 않고 이 기기에만 저장돼요.")}
       <div class="mode-cards">${modes.map(([k, n, d, g]) => `<button type="button" class="mode-card ${b.mode === k ? "on" : ""}" data-mode="${k}">${H.svg(g)}<b>${n}</b><small>${d}</small></button>`).join("")}</div>
 
       <section class="st-card ${b.mode === "image" ? "" : "dim"}" data-sec="image">
@@ -171,7 +173,7 @@
       return url ? `<span class="icon custom ${cls}"><img src="${url}" alt=""></span>` : `<span class="icon ${cls}">${H.svg(a.glyph)}</span>`;
     };
     const customCount = Object.keys(S().assets).filter((k) => k.startsWith("icon:")).length;
-    return `${head(2, "아이콘", "앱마다 원하는 이미지를 넣거나 기본 기호를 바꿔요. 실제 iPad 아이콘은 바뀌지 않고 Ὁρμή 안에서만 바뀌어요.")}
+    return `${head(3, "아이콘", "앱마다 원하는 이미지를 넣거나 기본 기호를 바꿔요. 실제 iPad 아이콘은 바뀌지 않고 Ὁρμή 안에서만 바뀌어요.")}
       <section class="st-card">
         <h3>${H.svg("grid")} 앱 고르기 <small>${apps.length}개 · 맞춤 아이콘 ${customCount}개</small></h3>
         <label class="lib-search small">${H.svg("search")}<input type="search" data-icon-q placeholder="앱 이름 검색" autocomplete="off"></label>
@@ -192,7 +194,7 @@
       </section>
       <section class="st-card">
         <h3>${H.svg("layers")} 여러 개 한 번에</h3>
-        <p class="hint">파일 이름을 앱 이름이나 ID로 맞춰 두면 알아서 찾아 넣어요. 예: <code>youtube.png</code>, <code>유튜브.png</code>, <code>노션.jpg</code></p>
+        <p class="hint">파일 이름을 앱 이름으로 맞춰 두면 알아서 찾아 넣어요. 예: <code>youtube.png</code>, <code>유튜브.png</code>, <code>노션.jpg</code>. 홈 화면에 없는 앱 이름이면 그 앱을 새로 더해요.</p>
         <div class="row wrap"><label class="btn primary">${H.svg("upload")}이미지 여러 장 선택<input type="file" accept="image/*" multiple hidden data-bulk></label><a class="btn small ghost" href="design-templates/아이콘_파일명_목록.csv" download>파일명 표</a><a class="btn small ghost" href="design-templates/icon-1024-guide.png" download>아이콘 가이드</a></div>
         <div class="bulk-result"></div>
       </section>
@@ -211,30 +213,12 @@
       return false;
     }
   }
-  async function bulkIcons(files) {
-    const apps = Object.values(S().apps);
-    const results = [];
-    for (const f of files.slice(0, 80)) {
-      const base = H.norm(f.name.replace(/\.[^.]+$/, ""));
-      const app = apps.find((a) => H.norm(a.id) === base) || apps.find((a) => H.norm(a.name) === base) || apps.find((a) => a.aliases.some((x) => H.norm(x) === base));
-      if (!app) {
-        results.push(`<li class="bad">${esc(f.name)} → 맞는 앱 없음</li>`);
-        continue;
-      }
-      const ok = await setIcon(app.id, f);
-      results.push(`<li class="${ok ? "ok" : "bad"}">${esc(f.name)} → ${esc(app.name)} ${ok ? "적용" : "실패"}</li>`);
-    }
-    renderPanel();
-    const box = H.$(".bulk-result");
-    if (box) box.innerHTML = `<ul>${results.join("")}</ul>`;
-    H.ui.toast(`${results.filter((r) => r.includes('class="ok"')).length}개 아이콘을 적용했어요.`);
-  }
 
-  /* ================= 03 Theme ================= */
+  /* ================= 04 Theme ================= */
   function panelTheme() {
     const t = S().theme;
     const p = H.THEMES[t.preset];
-    return `${head(3, "테마", "전체 분위기와 색, 시계 글꼴, 위젯·Dock 모양을 골라요.")}
+    return `${head(4, "테마", "전체 분위기와 색, 시계 글꼴, 위젯·Dock 모양을 골라요.")}
       <section class="st-card"><h3>${H.svg("palette")} 분위기</h3>
         <div class="preset-grid">${Object.entries(H.THEMES).map(([k, th]) => `<button type="button" class="preset ${t.preset === k ? "on" : ""}" data-preset="${k}" style="--a:${th.accent};--b:${th.accent2};--g1:${th.glow1};--g2:${th.glow2};--base:${th.base}"><i></i><b>${th.name}</b><small>${th.sub}</small></button>`).join("")}</div></section>
       <section class="st-card"><h3>${H.svg("sparkle")} 포인트 색</h3>
@@ -264,7 +248,7 @@
             <button type="button" class="btn small" data-wedit="${w.id}">편집</button><button type="button" class="icon-btn danger" data-wdel="${w.id}" aria-label="삭제">${H.svg("trash")}</button></li>`;
         }).join("")}</ul>` : '<p class="hint">이 페이지에는 위젯이 없어요.</p>'}</section>`;
     }).join("");
-    return `${head(4, "위젯", "시계·할 일·D-day·시간표·날씨 같은 위젯을 넣고 크기를 바꿔요. 위치는 홈 화면 편집 모드에서 끌어서 옮겨요.")}
+    return `${head(5, "위젯", "시계·할 일·D-day·시간표·날씨 같은 위젯을 넣고 크기를 바꿔요. 위치는 홈 화면 편집 모드에서 끌어서 옮겨요.")}
       <div class="row wrap"><button type="button" class="btn primary" data-add-w="0">${H.svg("plus")} 위젯 추가</button><a class="btn ghost" href="index.html?open=edit">${H.svg("move")} 홈 화면에서 위치 바꾸기</a></div>
       ${blocks}`;
   }
@@ -273,7 +257,7 @@
   function panelPrompts() {
     const ps = promptState;
     if (!ps.apps) ps.apps = S().pages.flatMap((p) => p.items).filter((k) => k[0] === "a").map((k) => S().apps[k.slice(2)]?.name).filter(Boolean).slice(0, 24).join(", ");
-    return `${head(5, "AI 디자인 프롬프트", "그림 생성 AI에 붙여 넣을 설명문을 만들어요. 이 앱이 그림을 만들지는 않아요. 만든 그림은 ① 배경, ② 아이콘, ④ 위젯 사진에 넣으면 돼요.")}
+    return `${head(6, "AI 디자인 프롬프트", "그림 생성 AI에 붙여 넣을 설명문을 만들어요. 이 앱이 그림을 만들지는 않아요. 만든 그림은 ② 배경, ③ 아이콘, ⑤ 위젯 사진에 넣거나, ① 한 번에 적용에서 한꺼번에 넣으면 돼요.")}
       <section class="st-card form">
         <div class="field"><span>무엇을 만들까요?</span>${H.ui.seg("p-type", H.prompts.TYPES, ps.type)}</div>
         <label class="field"><span>스타일</span><select class="input" data-p="style">${Object.entries(H.prompts.STYLES).map(([k, v]) => `<option value="${k}" ${k === ps.style ? "selected" : ""}>${v.ko}</option>`).join("")}</select></label>
@@ -293,9 +277,60 @@
     out.value = H.prompts.build({ ...promptState, apps: promptState.apps.split(/[,，\n]/).map((x) => x.trim()).filter(Boolean), theme: { a: t.accent || p.accent, b: t.accent2 || p.accent2 } });
   }
 
-  /* ================= 06 Backup ================= */
+  /* ================= 01 Design pack ================= */
+  function panelPack() {
+    const nHome = H.pack.homeApps("home").length;
+    const nAll = H.pack.homeApps("all").length;
+    return `${head(1, "한 번에 적용", "배경·앱 아이콘·색을 파일 하나, 또는 AI의 답 하나로 한꺼번에 바꿔요. 넣은 아이콘의 앱으로 홈 화면도 구성할 수 있어요.")}
+      <section class="st-card pack-drop" data-drop>
+        <h3>${H.svg("upload")} 파일로 한 번에</h3>
+        <p class="hint">zip 하나, 또는 이미지 여러 장을 한꺼번에 고르세요. 이름만 맞추면 알아서 제자리에 들어가요.</p>
+        <ul class="pk-rules">
+          <li><b>앱 아이콘</b><span><code>앱 이름.png</code> 예: <code>Chrome.png</code> <code>카카오톡.jpg</code> <code>노션.webp</code></span></li>
+          <li><b>배경</b><span><code>배경-가로.jpg</code> <code>배경-세로.jpg</code> 또는 <code>wallpaper-landscape</code> · <code>wallpaper-portrait</code></span></li>
+          <li><b>움직이는 배경</b><span><code>배경.mp4</code> 또는 <code>배경.gif</code></span></li>
+          <li><b>색·글꼴까지</b><span><code>pack.json</code>을 같이 넣으면 그 설정을 따라요 (아래 AI 프롬프트의 형식)</span></li>
+        </ul>
+        <label class="btn primary">${H.svg("upload")} 파일 고르기 (여러 개 가능)<input type="file" multiple hidden accept=".zip,.json,image/*,video/*,.svg" data-pack-files></label>
+        <p class="hint drop-hint">컴퓨터에서는 이 상자로 끌어다 놓아도 돼요.</p>
+      </section>
+      <section class="st-card form">
+        <h3>${H.svg("wand")} AI에게 맡기기</h3>
+        <ol class="steps-list"><li>원하는 분위기를 적고 <b>프롬프트 복사</b>를 눌러요.</li><li>Claude · ChatGPT · Gemini 같은 AI 채팅에 붙여 넣어요.</li><li>AI의 답을 통째로 복사해 아래 <b>AI 답 붙여넣기</b>에 넣어요. zip으로 받았다면 위 <b>파일로 한 번에</b>에 넣으면 돼요.</li></ol>
+        <label class="field"><span>원하는 분위기</span><textarea class="input" rows="2" data-pack-wish placeholder="예: 새벽 바다처럼 깊은 남색과 청록, 유리처럼 맑은 아이콘">${esc(packState.wish)}</textarea></label>
+        <div class="field"><span>AI가 줄 결과</span>${H.ui.seg("pk-mode", [["svg", "글로 받기 · 모든 AI"], ["zip", "이미지 zip · 그림 AI"]], packState.mode)}<small>글로 받기: 아이콘과 배경을 SVG 코드로 받아요. 어떤 AI든 되고 복사·붙여넣기만 하면 끝나요. 이미지 zip: 그림과 파일을 만들 수 있는 AI(ChatGPT 등)에서 더 사실적인 그림을 받아요.</small></div>
+        <div class="field"><span>아이콘을 만들 앱</span>${H.ui.seg("pk-scope", [["home", `홈 화면·Dock ${nHome}개`], ["all", `보관함 전체 ${nAll}개`]], packState.scope)}</div>
+        <label class="field"><span>프롬프트 <small>(직접 고쳐도 돼요)</small></span><textarea class="input prompt-out" rows="9" spellcheck="false" data-pack-prompt></textarea></label>
+        <div class="row wrap"><button type="button" class="btn primary" data-pack-copy>${H.svg("copy")} 프롬프트 복사</button></div>
+      </section>
+      <section class="st-card form">
+        <h3>${H.svg("doc")} AI 답 붙여넣기</h3>
+        <textarea class="input prompt-out" rows="6" spellcheck="false" data-pack-paste placeholder="AI가 준 답을 처음부터 끝까지 그대로 붙여 넣으세요. 앞뒤 설명이 섞여 있어도 괜찮아요."></textarea>
+        <div class="row wrap"><button type="button" class="btn primary" data-pack-apply>${H.svg("check")} 적용하기</button><button type="button" class="btn ghost" data-pack-clip>${H.svg("copy")} 클립보드에서 가져오기</button></div>
+      </section>
+      <section class="st-card"><h3>${H.svg("download")} 지금 디자인을 팩으로</h3><p class="hint">지금 배경·아이콘·색과 홈 화면 앱 구성을 디자인 팩(zip)으로 저장해요. 다른 기기에서 그대로 적용할 수 있어요.</p>
+        <button type="button" class="btn" data-pack-export>${H.svg("download")} 디자인 팩 내보내기</button></section>`;
+  }
+  function refreshPackPrompt() {
+    const out = H.$("[data-pack-prompt]");
+    if (out) out.value = H.pack.prompt(packState);
+  }
+  async function copyText(text, ta) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (err) {
+      if (ta) {
+        ta.focus();
+        ta.select();
+      }
+      return false;
+    }
+  }
+
+  /* ================= 07 Backup ================= */
   function panelBackup() {
-    return `${head(6, "백업", "디자인과 홈 화면 구성은 이 기기에만 저장돼요. 기기를 바꾸거나 브라우저 데이터를 지우기 전에 백업해 두세요.")}
+    return `${head(7, "백업", "디자인과 홈 화면 구성은 이 기기에만 저장돼요. 기기를 바꾸거나 브라우저 데이터를 지우기 전에 백업해 두세요.")}
       <div class="backup-grid">
         <section class="st-card"><h3>${H.svg("archive")} 전체 백업</h3><p class="hint">앱 배치·위젯·디자인과 사진·아이콘·영상까지 zip 파일 하나로 저장해요.</p>
           ${H.ui.switch("bk-video", true, "배경 영상도 넣기", S().assets["bg:video"] ? H.bytes(S().assets["bg:video"].size) : "영상 없음")}
@@ -312,13 +347,14 @@
   }
 
   /* ---------- panel render + wiring ---------- */
-  const PANELS = { bg: panelBg, icons: panelIcons, theme: panelTheme, widgets: panelWidgets, prompts: panelPrompts, backup: panelBackup };
+  const PANELS = { pack: panelPack, bg: panelBg, icons: panelIcons, theme: panelTheme, widgets: panelWidgets, prompts: panelPrompts, backup: panelBackup };
   function renderPanel() {
     const p = panel();
     const keepScroll = p.scrollTop;
     p.innerHTML = `<div class="st-panel-in">${PANELS[step]()}${navFoot()}</div>`;
     p.scrollTop = keepScroll;
     if (step === "prompts") refreshPrompt();
+    if (step === "pack") refreshPackPrompt();
     if (step === "backup")
       H.assets.usage().then((u) => {
         const el = H.$("[data-storage]");
@@ -445,6 +481,36 @@
         return;
       }
       if (q("[data-regen]")) return refreshPrompt();
+      // design pack
+      if (q("[data-pack-copy]")) {
+        const ta = H.$("[data-pack-prompt]");
+        const ok = await copyText(ta.value, ta);
+        H.ui.toast(ok ? "프롬프트를 복사했어요. AI 채팅에 붙여 넣으세요." : "선택된 글을 길게 눌러 복사해 주세요.");
+        return;
+      }
+      if (q("[data-pack-clip]")) {
+        try {
+          H.$("[data-pack-paste]").value = await navigator.clipboard.readText();
+        } catch (err) {
+          H.ui.toast("붙여넣기 칸을 길게 눌러 ‘붙여넣기’를 골라 주세요.");
+        }
+        return;
+      }
+      if (q("[data-pack-apply]")) {
+        const text = H.$("[data-pack-paste]").value;
+        if (!text.trim()) return H.ui.toast("AI의 답을 먼저 붙여 넣어 주세요.");
+        if (await H.pack.run({ text })) saved("디자인 팩 적용");
+        return;
+      }
+      if (q("[data-pack-export]")) {
+        H.ui.toast("디자인 팩을 만드는 중…");
+        try {
+          await H.pack.exportZip();
+        } catch (err) {
+          H.ui.toast(err.message || "디자인 팩을 만들지 못했어요.");
+        }
+        return;
+      }
       // backup
       if (q("[data-bk-all]")) {
         H.ui.toast("백업 파일을 만드는 중…");
@@ -494,10 +560,16 @@
         el.value = "";
         if (f && (await setIcon(selectedApp, f))) renderPanel();
       }
+      if (el.matches("[data-pack-files]")) {
+        const files = [...(el.files || [])];
+        el.value = "";
+        if (files.length && (await H.pack.run({ files }))) saved("디자인 팩 적용");
+      }
       if (el.matches("[data-bulk]")) {
         const files = [...(el.files || [])];
         el.value = "";
-        if (files.length) bulkIcons(files);
+        // same engine as the design pack: names are matched, unknown names become new apps
+        if (files.length && (await H.pack.run({ files }))) saved("아이콘 적용");
       }
       if (el.id === "motion-on") set((s) => (s.motion.on = el.checked));
       if (el.id === "particles") set((s) => (s.bg.particles = el.checked));
@@ -539,10 +611,29 @@
         const q = el.value.trim();
         p.querySelectorAll(".ip-app").forEach((b) => (b.hidden = !!q && !H.matchScore(q, [b.dataset.name, b.dataset.pick])));
       }
+      if (el.matches("[data-pack-wish]")) {
+        packState.wish = el.value;
+        refreshPackPrompt();
+      }
       if (el.dataset.p === "subject" || el.dataset.p === "apps") {
         promptState[el.dataset.p] = el.value;
         refreshPrompt();
       }
+    });
+    p.addEventListener("dragover", (e) => {
+      const z = e.target.closest("[data-drop]");
+      if (!z) return;
+      e.preventDefault();
+      z.classList.add("over");
+    });
+    p.addEventListener("dragleave", (e) => e.target.closest("[data-drop]")?.classList.remove("over"));
+    p.addEventListener("drop", async (e) => {
+      const z = e.target.closest("[data-drop]");
+      if (!z) return;
+      e.preventDefault();
+      z.classList.remove("over");
+      const files = [...(e.dataTransfer?.files || [])];
+      if (files.length && (await H.pack.run({ files }))) saved("디자인 팩 적용");
     });
     H.ui.bindSeg(p, (name, v) => {
       const t = (fn) => set(fn);
@@ -556,6 +647,10 @@
       if (name === "p-lang") {
         promptState.lang = v;
         refreshPrompt();
+      }
+      if (name === "pk-mode" || name === "pk-scope") {
+        packState[name === "pk-mode" ? "mode" : "scope"] = v;
+        refreshPackPrompt();
       }
     });
   }

@@ -37,7 +37,8 @@
     tagline: "A space made yours.",
   });
   const defaultBg = () => ({ mode: "ambient", shade: 0.35, blur: 0, particles: true, fit: "cover", speed: 1, dim: 0.35, videoUrl: "" });
-  const defaultPrefs = () => ({ hour12: false, openWeb: "auto", search: "google", installHint: true, confirmDelete: true, power: "auto", oled: false });
+  const defaultPrefs = () => ({ hour12: false, openWeb: "auto", search: "google", installHint: true, confirmDelete: true, power: "auto", oled: false, fx: defaultFx() });
+  const defaultFx = () => ({ page: "jelly", bounce: "mid", touch: true, tilt: true, parallax: true, magnify: true });
 
   function defaults() {
     const apps = {};
@@ -208,6 +209,17 @@
       confirmDelete: p.confirmDelete !== false,
       power: H.oneOf(p.power, ["auto", "saver", "normal", "smooth"], "auto"),
       oled: !!p.oled,
+      fx: (() => {
+        const f = p.fx && typeof p.fx === "object" ? p.fx : {};
+        return {
+          page: H.oneOf(f.page, ["slide", "jelly", "depth", "cube"], "jelly"),
+          bounce: H.oneOf(f.bounce, ["soft", "mid", "chewy"], "mid"),
+          touch: f.touch !== false,
+          tilt: f.tilt !== false,
+          parallax: f.parallax !== false,
+          magnify: f.magnify !== false,
+        };
+      })(),
     };
 
     /* asset manifest */
@@ -253,7 +265,7 @@
     };
     const apps = {};
     v1Apps.forEach((a, i) => {
-      const cat = H.DEFAULT_APPS.find((c) => c.id === a.id);
+      const cat = H.V1_APPS.find((c) => c.id === a.id);
       const url = typeof a.url === "string" ? a.url.trim() : "";
       let app;
       if (cat && (url === (oldDefaultURL[a.id] ?? "") || url === "layer://settings")) {
@@ -284,7 +296,7 @@
     /* Was the v1 layout still the factory layout? Then use the new default arrangement. */
     const V1_DOCK = ["safari", "music", "photos", "chatgpt", "files", "youtube"];
     const v1DefaultPage = (id) => {
-      const i = H.DEFAULT_APPS.findIndex((c) => c.id === id);
+      const i = H.V1_APPS.findIndex((c) => c.id === id);
       return i < 0 ? undefined : i < 16 ? 0 : i < 32 ? 1 : null;
     };
     const untouched =
@@ -325,6 +337,10 @@
       });
       out.pages[0].items = ["w:" + hero.id, ...widgetKeys, ...defPage1];
       out.widgets = widgets;
+      // an untouched v1 home → today's default home (Google apps), keeping the user's own links
+      H.DEFAULT_APPS.forEach((c, i) => {
+        if (!apps[c.id]) apps[c.id] = makeApp(c, 100 + i);
+      });
       out.pages.forEach((p) => (p.items = p.items.filter((k) => !k.startsWith("a:") || apps[k.slice(2)])));
       out.dock = H.DEFAULT_LAYOUT.dock.filter((id) => apps[id]);
     } else {

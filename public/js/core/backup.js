@@ -258,14 +258,36 @@
     H.emit("assets", Object.keys(base.assets));
   }
 
-  /* UI flow: pick file → summary → confirm → apply. */
+  /* Backup or design pack? (a zip with horme-backup.json, or a settings/v1/legacy-design JSON) */
+  async function isBackupFile(f) {
+    try {
+      const head = new Uint8Array(await f.slice(0, 4).arrayBuffer());
+      if (head[0] === 0x50 && head[1] === 0x4b) return (await zipRead(f)).names.includes("horme-backup.json");
+      if (!/\.json$/i.test(f.name) && f.type !== "application/json") return false;
+      const obj = JSON.parse(await f.text());
+      return obj?.format === "HORME_BACKUP" || Array.isArray(obj?.apps) && obj.apps.some((a) => a && a.page !== undefined) || ["HORME_INTERFACE_DESIGN", "KINET_HOME_DESIGN", "LAYER_HOME_DESIGN", "PRISM_DESIGN"].includes(obj?.format);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /* UI flow: pick file(s) → backups restore, anything else goes to the design-pack flow. */
   function importFlow() {
     const input = document.createElement("input");
     input.type = "file";
-    input.accept = ".zip,.json,application/zip,application/json";
+    input.multiple = true;
+    input.accept = ".zip,.json,application/zip,application/json,image/*,video/*,.svg";
     input.onchange = async () => {
-      const f = input.files?.[0];
-      if (!f) return;
+      const list = [...(input.files || [])];
+      if (!list.length) return;
+      if (list.length === 1 && (await isBackupFile(list[0]))) return importFile(list[0]);
+      if (H.pack) return H.pack.run({ files: list });
+      return importFile(list[0]);
+    };
+    input.click();
+  }
+  async function importFile(f) {
+    {
       let parsed;
       try {
         H.ui.toast("파일을 읽는 중…");
@@ -286,9 +308,8 @@
       } catch (e) {
         H.ui.toast(e.message || "불러오기에 실패했어요.");
       }
-    };
-    input.click();
+    }
   }
 
-  H.backup = { exportAll, exportSettings, parse, apply, importFlow, deliver, summary };
+  H.backup = { exportAll, exportSettings, parse, apply, importFlow, importFile, isBackupFile, deliver, summary };
 })();

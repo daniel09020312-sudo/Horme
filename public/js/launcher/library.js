@@ -195,6 +195,11 @@
     { label: "전체 백업 만들기", glyph: "archive", keys: "백업 backup 저장 내보내기", run: () => H.backup.exportAll() },
     { label: "백업 불러오기", glyph: "upload", keys: "복원 불러오기 가져오기 import", run: () => H.backup.importFlow() },
     { label: "배경 움직임 켜기/끄기", glyph: "wave", keys: "움직임 애니메이션 motion 배경", run: () => H.widgetActCtx("").toggleMotion() },
+    { label: "디자인 팩 적용 (파일 한 번에)", glyph: "layers", keys: "디자인 팩 테마 아이콘 배경 한번에 pack zip", run: () => H.pack.pick() },
+    { label: "애플 앱을 구글 앱으로 바꾸기", glyph: "refresh", keys: "구글 google 크롬 chrome gmail 바꾸기", run: () => {
+      const n = H.home.googleSwap();
+      H.ui.toast(n ? `앱 ${n}개를 구글 앱으로 바꿨어요.` : "바꿀 애플 앱이 홈 화면에 없어요.", n ? { action: { label: "되돌리기", fn: () => H.store.undo() } } : {});
+    } },
     { label: "절전 모드 켜기/끄기", glyph: "bolt", keys: "절전 배터리 전원 저전력 power saver battery", run: () => {
       const on = H.store.state.prefs.power !== "saver";
       H.store.commit((s) => (s.prefs.power = on ? "saver" : "auto"), { undo: false, label: "전원 모드" });

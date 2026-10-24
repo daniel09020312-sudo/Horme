@@ -31,6 +31,8 @@ body[data-bg="animated"] #bg-anim { opacity: 1; }
 #bg::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 15% 18%, var(--glow1), transparent 50%), radial-gradient(ellipse at 86% 82%, var(--glow2), transparent 44%), linear-gradient(180deg, rgba(4, 6, 12, 0.2), rgba(4, 6, 12, 0) 22%, rgba(4, 6, 12, 0) 70%, rgba(4, 6, 12, 0.35)); }
 body:not([data-bg="ambient"]) #bg::after { background: linear-gradient(180deg, rgba(4, 6, 12, 0.3), rgba(4, 6, 12, 0) 20%, rgba(4, 6, 12, 0) 70%, rgba(4, 6, 12, 0.4)); }
 #bg-haze, #bg-still { display: none; }
+/* swipe parallax: far layers are a little wider and trail the pages (offset set by bg.js) */
+body.fx-parallax #bg-haze, body.fx-parallax #bg-image, body.fx-parallax #bg-video, body.fx-parallax #bg-anim, body.fx-parallax #bg-still { left: -48px; width: calc(100% + 96px); translate: var(--bgx, 0px) 0; }
 body[data-bg="ambient"]:not(.oled) #bg-haze { display: block; }
 body[data-bg="animated"].bg-frozen #bg-still { display: block; }
 body[data-bg="animated"].bg-frozen #bg-anim { display: none; }
@@ -85,7 +87,11 @@ body.editing .normal-only { display: none; }
 /* ---------- pages ---------- */
 .viewport { flex: 1; min-height: 0; overflow: hidden; position: relative; touch-action: pan-y; }
 .track { height: 100%; display: flex; will-change: transform; }
-.track.animating { transition: transform 0.5s var(--spring); }
+/* Page transitions. Layers are prepared ahead of time (not at the first touch), so a swipe never
+   starts with a re-render hitch. Jelly: app icons lag behind by column (vars set by fx.js). */
+body[data-pagefx="jelly"] .page.home > .grid > .tile.app, body[data-pagefx="jelly"] .page.home > .grid > .tile.folder { will-change: transform; }
+body[data-pagefx="jelly"].paging .page.home > .grid > .tile.app, body[data-pagefx="jelly"].paging .page.home > .grid > .tile.folder { transform: translate3d(calc(var(--jxp, 0px) * var(--cl, 0) + var(--jxn, 0px) * var(--cr, 0)), 0, 0); }
+body[data-pagefx="depth"] #track > .page, body[data-pagefx="cube"] #track > .page { will-change: transform, opacity; backface-visibility: hidden; }
 .page { flex: 0 0 100%; width: 100%; height: 100%; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch;
   padding: clamp(6px, 1.6vh, 18px) max(var(--pad-x), env(safe-area-inset-right)) 28px max(var(--pad-x), env(safe-area-inset-left)); }
 .page::-webkit-scrollbar { display: none; }
@@ -98,13 +104,26 @@ body.editing .normal-only { display: none; }
 /* ---------- tiles ---------- */
 .tile { position: relative; min-width: 0; -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
 .tile.app, .tile.folder { display: flex; flex-direction: column; align-items: center; gap: 9px; padding: 0; text-align: center; border-radius: 18px; align-self: start; }
-.tile.app .icon, .tile.folder .icon { transition: transform 0.18s var(--ease), filter 0.18s; }
-.tile.app:active .icon, .tile.folder:active .icon { transform: scale(0.92); filter: brightness(0.85); }
-@media (hover: hover) { .tile.app:hover .icon, .tile.folder:hover .icon { transform: translateY(-2px); } }
+/* press: squish (and lean toward the finger), then spring back with a bounce — curves from fx.js */
+.tile.app .icon, .tile.folder .icon { transition: transform var(--pop-ms, 480ms) var(--ease-pop, cubic-bezier(0.34, 1.56, 0.64, 1)), box-shadow 0.3s; }
+.tile.pressing .icon { transform: scale(0.88); transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1); }
+body.fx-tilt .tile.pressing .icon { transform: perspective(380px) rotateX(calc(var(--ty, 0) * -14deg)) rotateY(calc(var(--tx, 0) * 14deg)) scale(0.88); }
+body.fx-tilt .tile.hovering:not(.pressing) .icon { transform: perspective(380px) rotateX(calc(var(--ty, 0) * 9deg)) rotateY(calc(var(--tx, 0) * -9deg)) translateY(-3px) scale(1.06); transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s; box-shadow: 0 16px 34px rgba(0, 0, 0, 0.32), inset 0 1px 1px rgba(255, 255, 255, 0.16); }
+/* light glare that follows the finger / cursor across the icon */
+body.fx-tilt .tile.pressing .icon::after, body.fx-tilt .tile.hovering .icon::after {
+  background: radial-gradient(circle at calc(50% + var(--tx, 0) * 46%) calc(50% + var(--ty, 0) * 46%), rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.06) 38%, rgba(255, 255, 255, 0) 62%), linear-gradient(135deg, rgba(255, 255, 255, 0.11), transparent 40%, transparent 76%, rgba(185, 170, 238, 0.07));
+}
+/* tapping an app: a quick pop with a glow ring (the background ripples too) */
+.tile.launching .icon { animation: launch-pop 0.62s var(--ease-pop, ease-out) both; }
+@keyframes launch-pop {
+  0% { transform: scale(0.88); }
+  38% { transform: scale(1.16); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 60%, transparent), 0 0 42px color-mix(in srgb, var(--accent) 45%, transparent); }
+  100% { transform: scale(1); }
+}
 .label { max-width: 100%; font-size: var(--label-size); line-height: 1.25; color: #e6e7f1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7); padding: 0 2px; }
 body[data-labels="off"] .grid .label { display: none; }
 .tile.unlinked .icon::before { content: ""; position: absolute; right: 7%; top: 7%; width: 9px; height: 9px; border-radius: 50%; background: #f5c26b; box-shadow: 0 0 0 2px rgba(10, 12, 20, 0.7); z-index: 2; }
-.tile.menu-target .icon, .tile.menu-target .wg { transform: scale(1.06); filter: brightness(1.12); }
+body .tile.tile.menu-target .icon, body .tile.tile.menu-target .wg { transform: scale(1.06); filter: brightness(1.12); }
 
 /* folder icon */
 .folder-icon { background: linear-gradient(150deg, rgba(120, 128, 160, 0.34), rgba(40, 46, 66, 0.5)); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
@@ -135,10 +154,10 @@ body.editing .grid { min-height: calc(100% - 4px); }
 /* drag */
 #drag-layer { position: fixed; inset: 0; z-index: 400; pointer-events: none; }
 .drag-ghost { position: fixed; left: 0; top: 0; margin: 0; pointer-events: none; z-index: 401; transition: none; will-change: transform; }
-.drag-ghost .icon, .drag-ghost .wg { transition: transform 0.18s var(--spring), box-shadow 0.18s; animation: none !important; }
+.drag-ghost .icon, .drag-ghost .wg { transition: transform var(--pop-ms, 0.4s) var(--ease-pop, var(--spring)), box-shadow 0.2s; animation: none !important; }
 .drag-ghost.lifted .icon, .drag-ghost.lifted .wg { transform: scale(1.1); box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45); }
 .drag-ghost.lifted .label { opacity: 0; }
-.drag-ghost.settling { transition: transform 0.2s var(--ease); }
+.drag-ghost.settling { transition: transform var(--sheet-ms, 0.3s) var(--ease-sheet, var(--ease)); }
 .tile.drag-source { opacity: 0.22; }
 .tile.drag-source .icon, .tile.drag-source .wg { animation: none !important; }
 .tile.merge-target .icon { transform: scale(1.16); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 70%, transparent), 0 12px 30px rgba(0, 0, 0, 0.4); }
@@ -149,7 +168,7 @@ body.dragging .page { overflow: hidden; }
 .bottom { flex: none; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 4px 16px calc(12px + env(safe-area-inset-bottom)); position: relative; z-index: 3; }
 .dots { display: flex; align-items: center; gap: 4px; min-height: 26px; }
 .dot { width: 26px; height: 26px; display: grid; place-items: center; position: relative; color: rgba(205, 207, 224, 0.5); }
-.dot::before { content: ""; width: 6px; height: 6px; border-radius: 99px; background: currentColor; transition: width 0.25s var(--spring), background 0.2s; }
+.dot::before { content: ""; width: 6px; height: 6px; border-radius: 99px; background: currentColor; transition: width var(--snap-ms, 0.3s) var(--ease-snap, var(--spring)), background 0.2s; }
 .dot.on { color: #eceaf8; }
 .dot.on::before { width: 22px; }
 .dot.lib::before { display: none; }
@@ -166,6 +185,10 @@ body.dragging .dot:not(.lib) { background: rgba(255, 255, 255, 0.06); border-rad
 body[data-dock="solid"] .dock { background: rgba(15, 19, 31, 0.94); -webkit-backdrop-filter: none; backdrop-filter: none; border-color: rgba(206, 217, 242, 0.2); }
 body[data-dock="clear"] .dock { background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; border-color: transparent; box-shadow: none; }
 .dock-apps { display: flex; align-items: center; gap: 12px; min-width: 0; min-height: var(--dock-icon); }
+/* dock magnification (touch: slide along the dock · trackpad: hover) */
+.dock { touch-action: none; }
+.dock-apps .tile, .dock-lib { transform-origin: 50% 100%; transition: transform var(--pop-ms, 0.45s) var(--ease-pop, var(--spring)); }
+.dock.magnifying .dock-apps .tile, .dock.magnifying .dock-lib { transition: transform 0.07s linear; }
 .dock .tile.app { gap: 0; }
 .dock .tile.app .label { display: none; }
 .dock .icon { --sz: var(--dock-icon); border-radius: var(--radius); }
@@ -229,7 +252,7 @@ body.on-library .dock { opacity: 0.94; }
 /* ---------- folder overlay ---------- */
 .folder-layer { position: fixed; inset: 0; z-index: 150; display: grid; place-items: center; padding: 20px; }
 .folder-backdrop { position: absolute; inset: 0; background: rgba(3, 6, 12, 0.5); -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px); opacity: 0; transition: opacity 0.22s; }
-.folder-panel { position: relative; width: min(560px, 92vw); padding: 22px 22px 16px; border-radius: 34px; background: rgba(60, 66, 92, 0.32); border: 1px solid rgba(230, 233, 255, 0.16); -webkit-backdrop-filter: blur(40px); backdrop-filter: blur(40px); box-shadow: 0 30px 90px rgba(0, 0, 0, 0.45); opacity: 0; transform: scale(0.8); transition: opacity 0.2s, transform 0.3s var(--spring); }
+.folder-panel { position: relative; width: min(560px, 92vw); padding: 22px 22px 16px; border-radius: 34px; background: rgba(60, 66, 92, 0.32); border: 1px solid rgba(230, 233, 255, 0.16); -webkit-backdrop-filter: blur(40px); backdrop-filter: blur(40px); box-shadow: 0 30px 90px rgba(0, 0, 0, 0.45); opacity: 0; transform: scale(0.72); transition: opacity 0.18s, transform var(--sheet-ms, 0.3s) var(--ease-sheet, var(--spring)); }
 .folder-layer.open .folder-backdrop { opacity: 1; }
 .folder-layer.open .folder-panel { opacity: 1; transform: none; }
 .folder-name { width: 100%; margin-bottom: 18px; border: 0; background: transparent; font-size: 24px; font-weight: 640; letter-spacing: -0.02em; color: var(--fg); outline: none; text-align: center; border-radius: 10px; padding: 4px; }
@@ -241,7 +264,7 @@ body.on-library .dock { opacity: 0.94; }
 /* ---------- spotlight ---------- */
 .spotlight { position: fixed; inset: 0; z-index: 300; display: flex; justify-content: center; align-items: flex-start; padding: max(9vh, calc(env(safe-area-inset-top) + 20px)) 16px 16px; }
 .spot-backdrop { position: absolute; inset: 0; background: rgba(3, 5, 11, 0.45); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); opacity: 0; transition: opacity 0.18s; }
-.spotlight-panel { position: relative; width: min(640px, 100%); max-height: 76dvh; display: flex; flex-direction: column; border-radius: 24px; background: rgba(26, 29, 43, 0.92); border: 1px solid rgba(232, 235, 255, 0.15); -webkit-backdrop-filter: blur(36px); backdrop-filter: blur(36px); box-shadow: 0 30px 100px rgba(0, 0, 0, 0.55); opacity: 0; transform: translateY(-10px) scale(0.98); transition: opacity 0.18s, transform 0.24s var(--spring); overflow: hidden; }
+.spotlight-panel { position: relative; width: min(640px, 100%); max-height: 76dvh; display: flex; flex-direction: column; border-radius: 24px; background: rgba(26, 29, 43, 0.92); border: 1px solid rgba(232, 235, 255, 0.15); -webkit-backdrop-filter: blur(36px); backdrop-filter: blur(36px); box-shadow: 0 30px 100px rgba(0, 0, 0, 0.55); opacity: 0; transform: translateY(-14px) scale(0.96); transition: opacity 0.16s, transform var(--sheet-ms, 0.3s) var(--ease-sheet, var(--spring)); overflow: hidden; }
 .spotlight.open .spot-backdrop, .spotlight.open .spotlight-panel { opacity: 1; transform: none; }
 .spot-input { display: flex; align-items: center; gap: 12px; padding: 0 18px; height: 62px; border-bottom: 1px solid var(--line); }
 .spot-input .g { width: 22px; height: 22px; color: var(--sub); }

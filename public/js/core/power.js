@@ -1,8 +1,8 @@
 /* Ὁρμή — power manager. Decides how much the launcher may animate, so it costs as little battery as possible.
    Levels
      saver  : nothing moves, no glass blur, no seconds, photos don't rotate
-     normal : slow ambient background at 12 frames/s, low-resolution canvas, static colour haze
-     smooth : 30 frames/s, sharper canvas, drifting haze, blinking colons
+     normal : ambient background at 20 frames/s (full rate while touching), low-resolution canvas
+     smooth : every display frame, sharper canvas, drifting haze, blinking colons
    "auto" picks saver on low battery / OS low-power mode / data saver, smooth while charging, normal otherwise.
    Nothing here polls; it only reacts to events (battery, visibility, an occasional touch). */
 (() => {
@@ -11,13 +11,14 @@
   const S = () => H.store?.state;
   const LEVEL = {
     saver: { fps: 0, dpr: 1, haze: false, blink: false },
-    normal: { fps: 12, dpr: 1, haze: false, blink: false },
-    smooth: { fps: 30, dpr: 1.5, haze: true, blink: true },
+    normal: { fps: 20, dpr: 1, haze: false, blink: false },
+    smooth: { fps: 60, dpr: 1.5, haze: true, blink: true },
   };
   const NAME = { saver: "절전", normal: "기본", smooth: "부드럽게" };
   const sig = { battery: null, lowPower: false, saveData: !!navigator.connection?.saveData };
   const power = { mode: "normal", reason: "", covered: false, LEVEL, NAME };
   let lastProbe = 0;
+  let suspect = 0;
   let probing = false;
   let lastOled = null;
   const mqTransparency = window.matchMedia?.("(prefers-reduced-transparency: reduce)");
@@ -71,10 +72,21 @@
       for (let i = 6; i < ts.length; i++) d.push(ts[i] - ts[i - 1]);
       d.sort((a, b) => a - b);
       const p25 = d[Math.floor(d.length * 0.25)];
-      const low = p25 > 26 && p25 < 60;
-      if (low !== sig.lowPower) {
-        sig.lowPower = low;
-        apply();
+      const p75 = d[Math.floor(d.length * 0.75)];
+      // a real 30 fps cap gives frames packed tightly around 33 ms; a busy page gives a messy spread
+      const low = p25 > 29 && p75 < 37.5;
+      if (!low) {
+        suspect = 0;
+        if (sig.lowPower) {
+          sig.lowPower = false;
+          apply();
+        }
+      } else if (!sig.lowPower) {
+        // switch only when two samples a few seconds apart agree
+        if (++suspect >= 2) {
+          sig.lowPower = true;
+          apply();
+        } else setTimeout(probe, 2500);
       }
     };
     requestAnimationFrame(step);
@@ -109,8 +121,8 @@
     const pref = S()?.prefs.power || "auto";
     const what = {
       saver: "배경과 효과를 멈추고 흐림 효과를 꺼요. 초 단위 표시와 사진 자동 넘김도 쉬어요.",
-      normal: "배경을 1초에 12장, 낮은 해상도로 천천히 그려요.",
-      smooth: "배경을 1초에 30장, 선명하게 그려요. 전기를 가장 많이 써요.",
+      normal: "배경을 1초에 20장 그리고, 화면을 만지는 동안에는 최고 속도로 그려요.",
+      smooth: "배경을 화면 주사율 그대로, 선명하게 그려요. 전기를 가장 많이 써요.",
     }[power.mode];
     const head = pref === "auto" ? `자동 → ${NAME[power.mode]}${power.reason ? ` (${power.reason})` : ""}` : NAME[power.mode];
     return { head, body: what };

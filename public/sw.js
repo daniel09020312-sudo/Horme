@@ -1,7 +1,7 @@
 /* Ὁρμή service worker — offline shell + update flow.
    Pages: network first (so new versions arrive), cached copy when offline.
    Static files: cached first, refreshed in the background. */
-const VERSION = "horme-2.1.0-897e0b6d8f";
+const VERSION = "horme-2.2.0-0997d874e9";
 const SHELL = [
  "./",
  "./index.html",
@@ -17,6 +17,7 @@ const SHELL = [
  "./js/core/catalog.js",
  "./js/core/glyphs.js",
  "./js/core/launch.js",
+ "./js/core/pack.js",
  "./js/core/power.js",
  "./js/core/schema.js",
  "./js/core/store.js",
@@ -26,6 +27,7 @@ const SHELL = [
  "./js/launcher/bg.js",
  "./js/launcher/drag.js",
  "./js/launcher/folders.js",
+ "./js/launcher/fx.js",
  "./js/launcher/home.js",
  "./js/launcher/library.js",
  "./js/launcher/main.js",

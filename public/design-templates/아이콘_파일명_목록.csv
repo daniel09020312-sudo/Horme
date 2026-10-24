@@ -1,4 +1,38 @@
 ﻿앱 ID,앱 이름,파일명 예시,카테고리
+chrome,Chrome,chrome.png,유틸리티
+google,Google,google.png,유틸리티
+gmail,Gmail,gmail.png,생산성
+gcalendar,Google 캘린더,gcalendar.png,생산성
+gkeep,Google Keep,gkeep.png,생산성
+slides,Google Slides,slides.png,생산성
+gphotos,Google 포토,gphotos.png,크리에이티브
+gmaps,Google 지도,gmaps.png,생활
+gtranslate,Google 번역,gtranslate.png,공부
+gmeet,Google Meet,gmeet.png,소셜
+ytmusic,YouTube Music,ytmusic.png,엔터테인먼트
+gemini,Gemini,gemini.png,생산성
+youtube,YouTube,youtube.png,엔터테인먼트
+drive,Google Drive,drive.png,생산성
+docs,Google Docs,docs.png,생산성
+sheets,Google Sheets,sheets.png,생산성
+classroom,Classroom,classroom.png,공부
+shortcuts,단축어,shortcuts.png,유틸리티
+goodnotes,Goodnotes,goodnotes.png,공부
+notion,Notion,notion.png,생산성
+chatgpt,ChatGPT,chatgpt.png,생산성
+spotify,Spotify,spotify.png,엔터테인먼트
+soundcloud,SoundCloud,soundcloud.png,엔터테인먼트
+interchange,Interchange,interchange.png,크리에이티브
+figma,Figma,figma.png,크리에이티브
+procreate,Procreate,procreate.png,크리에이티브
+discord,Discord,discord.png,소셜
+pinterest,Pinterest,pinterest.png,크리에이티브
+camera,카메라,camera.png,유틸리티
+calculator,계산기,calculator.png,유틸리티
+clock,시계,clock.png,유틸리티
+messages,메시지,messages.png,소셜
+appstore,App Store,appstore.png,유틸리티
+settings,Ὁρμή 설정,settings.png,유틸리티
 safari,Safari,safari.png,유틸리티
 music,음악,music.png,엔터테인먼트
 photos,사진,photos.png,크리에이티브
@@ -6,53 +40,21 @@ files,파일,files.png,생산성
 calendar,캘린더,calendar.png,생산성
 notes,메모,notes.png,생산성
 maps,지도,maps.png,생활
-shortcuts,단축어,shortcuts.png,유틸리티
-youtube,YouTube,youtube.png,엔터테인먼트
-spotify,Spotify,spotify.png,엔터테인먼트
-chatgpt,ChatGPT,chatgpt.png,생산성
-goodnotes,Goodnotes,goodnotes.png,공부
-clock,시계,clock.png,유틸리티
 mail,Mail,mail.png,생산성
-appstore,App Store,appstore.png,유틸리티
-interchange,Interchange,interchange.png,크리에이티브
-drive,Google Drive,drive.png,생산성
-docs,Google Docs,docs.png,생산성
-sheets,Google Sheets,sheets.png,생산성
-classroom,Classroom,classroom.png,공부
-figma,Figma,figma.png,크리에이티브
-procreate,Procreate,procreate.png,크리에이티브
-discord,Discord,discord.png,소셜
-pinterest,Pinterest,pinterest.png,크리에이티브
-soundcloud,SoundCloud,soundcloud.png,엔터테인먼트
-notion,Notion,notion.png,생산성
-camera,카메라,camera.png,유틸리티
 books,도서,books.png,공부
-calculator,계산기,calculator.png,유틸리티
-messages,메시지,messages.png,소셜
 meet,FaceTime,meet.png,소셜
 freeform,Freeform,freeform.png,크리에이티브
-settings,Ὁρμή 설정,settings.png,유틸리티
 kakaotalk,카카오톡,kakaotalk.png,소셜
 instagram,Instagram,instagram.png,소셜
 x,X,x.png,소셜
 telegram,Telegram,telegram.png,소셜
 zoom,Zoom,zoom.png,소셜
-gmeet,Google Meet,gmeet.png,소셜
-gmail,Gmail,gmail.png,생산성
-gcalendar,Google 캘린더,gcalendar.png,생산성
-gphotos,Google 포토,gphotos.png,크리에이티브
-chrome,Chrome,chrome.png,유틸리티
-google,Google,google.png,유틸리티
-gtranslate,Google 번역,gtranslate.png,공부
-gmaps,Google 지도,gmaps.png,생활
-gemini,Gemini,gemini.png,생산성
 claude,Claude,claude.png,생산성
 naver,네이버,naver.png,유틸리티
 navermap,네이버 지도,navermap.png,생활
 kakaomap,카카오맵,kakaomap.png,생활
 papago,파파고,papago.png,공부
 webtoon,네이버 웹툰,webtoon.png,엔터테인먼트
-ytmusic,YouTube Music,ytmusic.png,엔터테인먼트
 melon,멜론,melon.png,엔터테인먼트
 netflix,Netflix,netflix.png,엔터테인먼트
 disney,Disney+,disney.png,엔터테인먼트

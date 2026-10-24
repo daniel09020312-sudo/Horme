@@ -91,7 +91,7 @@
     if (!sess) return;
     H.$$(".tile.drag-source").forEach((t) => t.classList.remove("drag-source"));
     H.$$(`.tile[data-key="${CSS.escape(sess.key)}"]`).forEach((t) => {
-      if (!t.closest(".page.library, .sheet-layer")) t.classList.add("drag-source");
+      if (!t.closest(".page.library, .sheet-layer, #drag-layer")) t.classList.add("drag-source");
     });
   }
 
@@ -113,6 +113,7 @@
     if (!press || sess) return;
     press.long = true;
     lastLongPress = Date.now();
+    H.fx?.releasePress();
     H.home.suppressNextClick(1200);
     H.home.menuFor(press.tile);
   }
@@ -170,7 +171,8 @@
     const r = tile.getBoundingClientRect();
     const ghost = tile.cloneNode(true);
     ghost.classList.add("drag-ghost");
-    ghost.classList.remove("drag-source", "menu-target");
+    ghost.classList.remove("drag-source", "menu-target", "pressing", "hovering", "launching");
+    H.fx?.releasePress();
     ghost.querySelector(".badge")?.remove();
     ghost.style.width = r.width + "px";
     ghost.style.height = r.height + "px";
@@ -209,10 +211,48 @@
     requestAnimationFrame(() => ghost.classList.add("lifted"));
   }
 
+  /* The ghost follows the finger on a stiff spring (a hint of weight) and leans into the
+     direction it is moving, like a card being slid across a table. */
+  let follow = 0;
   function position(x, y) {
-    sess.x = x;
-    sess.y = y;
-    sess.ghost.style.transform = `translate3d(${x - sess.off.x}px, ${y - sess.off.y}px, 0)`;
+    const s = sess;
+    s.x = x;
+    s.y = y;
+    s.tx = x - s.off.x;
+    s.ty = y - s.off.y;
+    if (s.gx === undefined || H.reducedMotion()) {
+      s.gx = s.tx;
+      s.gy = s.ty;
+      s.vx = s.vy = s.rot = 0;
+      paintGhost(s);
+      return;
+    }
+    if (!follow) follow = requestAnimationFrame(stepGhost);
+  }
+  function paintGhost(s) {
+    s.ghost.style.transform = `translate3d(${s.gx.toFixed(2)}px, ${s.gy.toFixed(2)}px, 0) rotate(${s.rot.toFixed(2)}deg)`;
+  }
+  function stepGhost(now) {
+    follow = 0;
+    const s = sess;
+    if (!s) return;
+    let dt = Math.min(0.05, (now - (s.lt || now - 16)) / 1000) || 1 / 60;
+    s.lt = now;
+    const k = 1100;
+    const c = 2 * Math.sqrt(k) * 0.86;
+    while (dt > 1e-6) {
+      const h = Math.min(dt, 1 / 240);
+      s.vx += (-k * (s.gx - s.tx) - c * s.vx) * h;
+      s.vy += (-k * (s.gy - s.ty) - c * s.vy) * h;
+      s.gx += s.vx * h;
+      s.gy += s.vy * h;
+      dt -= h;
+    }
+    const lean = Math.max(-11, Math.min(11, s.vx * 0.011));
+    s.rot += (lean - s.rot) * 0.25;
+    paintGhost(s);
+    const resting = Math.abs(s.gx - s.tx) < 0.3 && Math.abs(s.gy - s.ty) < 0.3 && Math.abs(s.vx) + Math.abs(s.vy) < 4 && Math.abs(s.rot) < 0.05;
+    if (!resting) follow = requestAnimationFrame(stepGhost);
   }
 
   let raf = 0;
@@ -432,12 +472,17 @@
       ghost.remove();
       H.$$(".tile.drag-source, .tile.merge-target").forEach((t) => t.classList.remove("drag-source", "merge-target"));
     };
+    if (follow) {
+      cancelAnimationFrame(follow);
+      follow = 0;
+    }
     if (target && !H.reducedMotion()) {
       const r = target.getBoundingClientRect();
       ghost.classList.remove("lifted");
       ghost.classList.add("settling");
       ghost.style.transform = `translate3d(${r.left}px, ${r.top}px, 0)`;
-      setTimeout(settle, 220);
+      const ms = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--sheet-ms")) || 300;
+      setTimeout(settle, Math.min(700, ms));
     } else settle();
     H.store.commit(() => {}, { undo: false });
     if (H.store.pushUndo(s.snap, label)) H.emit("change", { label, undoable: true, scope: "all" });

@@ -3,7 +3,7 @@
   "use strict";
   const H = (window.H = window.H || {});
 
-  H.VERSION = "2.1.0";
+  H.VERSION = "2.2.0";
   H.BUILD = "2026-10-24";
 
   H.$ = (sel, root = document) => root.querySelector(sel);
@@ -74,6 +74,37 @@
     window.matchMedia?.("(display-mode: standalone)").matches || navigator.standalone === true;
   H.reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   H.isPortrait = () => window.innerHeight > window.innerWidth;
+
+  /* iPadOS 26 can bring a home-screen web app back from the background with a stale, smaller layout
+     viewport — the whole page drawn squeezed into one corner until the iPad is rotated. Re-applying
+     the viewport meta tag makes WebKit recompute the viewport; afterwards a resize lets everything
+     that measured the old size lay itself out again. Harmless when nothing is wrong. */
+  // two equivalent settings; flipping between them is a real change WebKit has to process
+  const VP = ["width=device-width, initial-scale=1, viewport-fit=cover", "width=device-width, initial-scale=1, viewport-fit=cover, shrink-to-fit=no"];
+  let vpFlip = 0;
+  let lastSize = "";
+  H.healViewport = () => {
+    const meta = document.querySelector('meta[name="viewport"]');
+    if (!meta) return;
+    vpFlip ^= 1;
+    meta.setAttribute("content", VP[vpFlip]);
+    if (window.scrollX || window.scrollY) window.scrollTo(0, 0);
+    requestAnimationFrame(() => {
+      const size = `${window.innerWidth}x${window.innerHeight}`;
+      if (size !== lastSize) {
+        lastSize = size;
+        window.dispatchEvent(new Event("resize"));
+      }
+    });
+  };
+  const healSoon = () => [0, 200, 650, 1500].forEach((ms) => setTimeout(H.healViewport, ms));
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", () => !document.hidden && healSoon());
+    window.addEventListener("pageshow", (e) => e.persisted && healSoon());
+    window.addEventListener("focus", () => setTimeout(H.healViewport, 120));
+    window.addEventListener("orientationchange", () => setTimeout(H.healViewport, 300));
+    window.addEventListener("resize", () => (lastSize = `${window.innerWidth}x${window.innerHeight}`));
+  }
   H.params = new URLSearchParams(location.search);
   H.isPreview = H.params.get("preview") === "1";
 
@@ -242,9 +273,21 @@
   };
 
   /* Haptic tick where supported (Android). iOS ignores silently. */
+  /* Android: vibrate. iPhone (iOS 18+): tapping a hidden <input switch> plays the system haptic tick.
+     iPads have no haptic engine, so this quietly does nothing there. */
+  let hapticLabel = null;
   H.haptic = (ms = 8) => {
     try {
-      navigator.vibrate?.(ms);
+      if (navigator.vibrate) return void navigator.vibrate(ms);
+      if (!H.isIOS || !document.body) return;
+      if (!hapticLabel) {
+        hapticLabel = document.createElement("label");
+        hapticLabel.setAttribute("aria-hidden", "true");
+        hapticLabel.style.cssText = "position:fixed;left:-99px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none";
+        hapticLabel.innerHTML = '<input type="checkbox" switch tabindex="-1">';
+        document.body.append(hapticLabel);
+      }
+      hapticLabel.click();
     } catch (e) {}
   };
 

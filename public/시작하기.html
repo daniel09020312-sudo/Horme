@@ -46,11 +46,11 @@
 <body>
   <header class="doc-top">
     <img src="icons/icon-192.png" alt="" width="28" height="28"><b>Ὁρμή 설명서</b>
-    <nav><a href="#install">설치</a><a href="#home">홈 화면</a><a href="#links">앱 연결</a><a href="#widgets">위젯</a><a href="#design">디자인</a><a href="#backup">백업</a><a href="#battery">배터리</a><a href="#faq">문제 해결</a><a href="#features">기능 표</a><a href="#changes">바뀐 점</a></nav>
+    <nav><a href="#install">설치</a><a href="#home">홈 화면</a><a href="#links">앱 연결</a><a href="#widgets">위젯</a><a href="#design">디자인</a><a href="#pack">디자인 팩</a><a href="#motion">움직임</a><a href="#backup">백업</a><a href="#battery">배터리</a><a href="#faq">문제 해결</a><a href="#features">기능 표</a><a href="#changes">바뀐 점</a></nav>
   </header>
   <main>
     <div class="hero">
-      <p class="over">CUSTOM LAUNCHER · v2.1</p>
+      <p class="over">CUSTOM LAUNCHER · v2.2</p>
       <h1>Ὁρμή 시작하기</h1>
       <p>Ὁρμή(호르메)는 iPad · iPhone · Android에서 쓰는 <b>나만의 홈 화면 웹 앱</b>이에요. 움직이는 배경, 위젯, 폴더, 앱 보관함, 빠른 검색을 갖췄고, 디자인 스튜디오에서 사진·영상·아이콘·색을 바꿀 수 있어요. 기기의 진짜 홈 화면을 바꾸지는 않고, Ὁρμή를 열었을 때 그 안에서 동작해요.</p>
       <div class="cta"><a class="btn primary" href="index.html">Ὁρμή 열기</a><a class="btn" href="studio.html">디자인 스튜디오</a><a class="btn ghost" href="logos.html">로고 시안 보기</a></div>
@@ -71,7 +71,7 @@
     <section id="home">
       <p class="over">02</p><h2>홈 화면 다루기</h2>
       <div class="grid2">
-        <div class="card"><h3>넘기기</h3><p>손가락을 따라 페이지가 움직여요. 마지막 페이지는 <b>앱 보관함</b>. 키보드는 <kbd>←</kbd> <kbd>→</kbd>, 트랙패드는 두 손가락 가로 스와이프.</p></div>
+        <div class="card"><h3>넘기기</h3><p>손가락을 따라 페이지가 움직이고, 놓으면 손가락 속도 그대로 미끄러지다 살짝 튕기며 멈춰요. 움직이는 페이지를 다시 잡을 수도 있어요. 마지막 페이지는 <b>앱 보관함</b>. 키보드는 <kbd>←</kbd> <kbd>→</kbd>, 트랙패드는 두 손가락 가로 스와이프.</p></div>
         <div class="card"><h3>길게 누르기</h3><p>아이콘·위젯·폴더를 길게 누르면 빠른 메뉴(앱/웹으로 열기, 편집, Dock, 페이지 이동, 삭제)가 떠요. 마우스는 오른쪽 클릭.</p></div>
         <div class="card"><h3>편집 모드</h3><p>상단 연필 버튼, 또는 길게 누른 채로 움직이면 아이콘이 흔들려요. 끌어서 순서를 바꾸고, 화면 가장자리로 끌면 옆 페이지로(마지막 페이지 뒤로 끌면 새 페이지가 생겨요). 빈 곳을 탭하거나 <b>완료</b>로 끝내요.</p></div>
         <div class="card"><h3>폴더</h3><p>편집 모드에서 앱을 다른 앱 <b>한가운데</b>에 잠깐 올려 두면 폴더가 돼요. 폴더를 열어 이름을 바꾸고, 앱을 바깥으로 끌어내면 꺼낼 수 있어요.</p></div>
@@ -88,9 +88,9 @@
       <div class="tbl"><table>
         <tr><th>앱</th><th>앱 주소</th><th>비고</th></tr>
         <tr><td>YouTube · Spotify · Notion · Discord · Pinterest · SoundCloud</td><td><code>youtube://</code> 등</td><td><span class="tag ok">바로 열림</span></td></tr>
-        <tr><td>Google Drive · Docs · Sheets</td><td><code>googledrive://</code> 등</td><td><span class="tag ok">바로 열림</span></td></tr>
-        <tr><td>음악 · 사진 · 메모 · 캘린더 · 파일 · 지도 · 도서 · Mail · App Store · 단축어</td><td><code>music://</code> <code>photos-redirect://</code> 등</td><td><span class="tag cond">iOS 버전에 따라 다름</span></td></tr>
-        <tr><td>Safari</td><td><code>x-safari-https://</code></td><td><span class="tag cond">iOS 16에서는 안 될 수 있음</span></td></tr>
+        <tr><td>Chrome · Gmail · Google 캘린더 · 포토 · 지도 · 번역 · Drive · Docs · Sheets · Slides · YouTube Music</td><td><code>googlechrome://</code> <code>googlegmail://</code> 등</td><td><span class="tag ok">앱이 설치돼 있으면 바로 열림</span></td></tr>
+        <tr><td>Google Keep · Gemini · Meet · Classroom · Google 검색</td><td>공개된 주소 없음</td><td><span class="tag cond">웹으로 열림 (단축어로 앱 연결 가능)</span></td></tr>
+        <tr><td>Safari · 음악 · 사진 · 메모 · 캘린더 · 파일 · 지도 · 도서 · Mail (보관함 → 앱 추가)</td><td><code>x-safari-https://</code> <code>music://</code> 등</td><td><span class="tag cond">iOS 버전에 따라 다름</span></td></tr>
         <tr><td>카메라 · 계산기 · FaceTime · Freeform · Procreate</td><td>공개된 주소 없음</td><td><span class="tag no">단축어로 연결</span></td></tr>
         <tr><td>Interchange</td><td>—</td><td>배포한 게임의 https 주소를 웹 주소에 넣으세요</td></tr>
       </table></div>
@@ -101,7 +101,7 @@
         <li>Ὁρμή에서 그 아이콘을 누르면 나오는 <b>연결하기</b> 화면(또는 앱 편집 → ‘단축어로 연결…’)에 같은 이름을 넣어요.</li>
       </ol>
       <p>Ὁρμή는 애플이 공개한 형식 <code>shortcuts://run-shortcut?name=…</code>을 써요. 실행할 때 단축어 앱이 잠깐 보였다가 앱이 열려요.</p>
-      <div class="card"><p>목록에 없는 앱은 <b>앱 보관함 → 앱 추가</b>에서 카카오톡·인스타그램·네이버 지도·Gmail 등 37개 앱을 고르거나 <b>직접 만들기</b>로 추가해요. 아이콘 위의 노란 점은 “아직 연결 주소가 없음” 표시예요.</p></div>
+      <div class="card"><p>기본 앱은 구글 앱(Chrome · Gmail · Google 캘린더 · Keep · 포토 · 지도 …)이에요. 애플 앱을 쓰던 홈 화면은 설정 → <b>애플 앱을 구글 앱으로 바꾸기</b>로 자리 그대로 바꿀 수 있어요. 목록에 없는 앱은 <b>앱 보관함 → 앱 추가</b>에서 고르거나 <b>직접 만들기</b>로 추가하고, 디자인 팩에 아이콘을 넣어 한꺼번에 더할 수도 있어요. 아이콘 위의 노란 점은 “아직 연결 주소가 없음” 표시예요.</p></div>
     </section>
 
     <section id="widgets">
@@ -131,17 +131,67 @@
       <p>상단 <b>디자인</b> 버튼. 오른쪽(휴대폰은 ‘미리보기’ 버튼)에 <b>실제 Ὁρμή 화면</b>이 그대로 보이고, 바꾸는 즉시 반영돼요. iPad 가로·세로·휴대폰 크기를 골라 볼 수 있어요.</p>
       <ul>
         <li><b>배경:</b> 기본 움직임 / 사진(가로·세로 따로) / 영상(MP4 권장, 300MB 이하) / 움직이는 이미지(GIF·APNG·WebP). 어둡게·흐리게, 입자 효과 겹치기.</li>
-        <li><b>아이콘:</b> 앱마다 이미지 넣기, 기본 기호 바꾸기, 파일 이름으로 여러 개 한 번에(<code>youtube.png</code>, <code>유튜브.png</code> 모두 인식), 크기·모서리·이름 표시.</li>
+        <li><b>한 번에 적용:</b> 디자인 팩(아래) — 배경·아이콘·색을 파일 하나 또는 AI 답 하나로.</li>
+        <li><b>아이콘:</b> 앱마다 이미지 넣기, 기본 기호 바꾸기, 파일 이름으로 여러 개 한 번에(<code>youtube.png</code>, <code>유튜브.png</code> 모두 인식, 없는 앱 이름이면 그 앱을 새로 더해요), 크기·모서리·이름 표시.</li>
         <li><b>테마:</b> 7가지 분위기, 포인트 색 2개, 시계 글꼴(얇게·세리프·모노·둥글게), 위젯·Dock 모양, 간격, 시계 아래 문구.</li>
         <li><b>위젯:</b> 페이지별 위젯 목록, 추가·편집·크기·삭제.</li>
         <li><b>AI 프롬프트:</b> 아이콘·아이콘 세트·위젯·가로/세로 배경·배경 영상용 설명문을 영어/한국어로 만들어 복사.</li>
         <li><b>백업:</b> 전체 백업 · 불러오기 · 초기화 · 저장 공간 확인.</li>
       </ul>
-      <p><code>app-icon-pack</code> 폴더에는 같은 스타일의 앱 아이콘 70개(PNG·SVG)가 들어 있어요. 단축어 앱의 ‘홈 화면에 추가’에서 아이콘으로 쓰면 iPad의 진짜 홈 화면도 같은 분위기로 맞출 수 있어요.</p>
+      <p><code>app-icon-pack</code> 폴더에는 같은 스타일의 앱 아이콘 72개(PNG·SVG)가 들어 있어요. 단축어 앱의 ‘홈 화면에 추가’에서 아이콘으로 쓰면 iPad의 진짜 홈 화면도 같은 분위기로 맞출 수 있어요.</p>
+    </section>
+
+    <section id="pack">
+      <p class="over">06</p><h2>디자인 팩 — 한 번에 적용</h2>
+      <p>배경·앱 아이콘·테마 색을 <b>한 번에</b> 바꿔요. 설정의 <b>디자인 팩 적용</b>, 또는 디자인 스튜디오 <b>① 한 번에 적용</b>에서 써요. 적용 전에 무엇이 바뀌는지 보여 주고, 적용한 뒤에도 <b>되돌리기</b>로 취소할 수 있어요.</p>
+      <h3>파일로</h3>
+      <p>zip 하나, 또는 파일 여러 개를 한꺼번에 고르면 이름을 보고 알아서 넣어요.</p>
+      <div class="tbl"><table>
+        <tr><th>넣을 것</th><th>파일 이름</th></tr>
+        <tr><td>앱 아이콘</td><td><code>앱 이름.png</code> — <code>Chrome.png</code>, <code>카카오톡.jpg</code>, <code>노션.webp</code>, <code>01_유튜브.png</code>도 돼요</td></tr>
+        <tr><td>배경 사진</td><td><code>배경-가로.jpg</code> · <code>배경-세로.jpg</code> (또는 <code>wallpaper-landscape</code> / <code>-portrait</code>)</td></tr>
+        <tr><td>움직이는 배경</td><td><code>배경.mp4</code> 또는 <code>배경.gif</code></td></tr>
+        <tr><td>색·글꼴·문구</td><td><code>pack.json</code> (아래 형식)</td></tr>
+      </table></div>
+      <p><b>아이콘이 앱을 정해요.</b> 홈 화면에 없는 앱의 아이콘을 넣으면 그 앱이 더해지고(알려진 앱이면 링크까지 자동), 처음 보는 이름이면 그 이름의 바로가기를 만들어요. 아이콘이 4개 이상이면 <b>“이 아이콘들로 홈 화면 앱 구성하기”</b>가 켜진 채로 열려서, 홈 화면과 Dock이 팩에 든 앱으로 바뀌어요(위젯은 그대로).</p>
+      <h3>AI에게 맡기기</h3>
+      <ol>
+        <li>스튜디오 ① 한 번에 적용에서 원하는 분위기를 적고 <b>프롬프트 복사</b>.</li>
+        <li>Claude · ChatGPT · Gemini 같은 AI 채팅에 붙여 넣기. 프롬프트에 지금 홈 화면의 앱 목록과 형식이 다 들어 있어요.</li>
+        <li><b>글로 받기</b>를 골랐다면 AI의 답을 통째로 복사해 <b>AI 답 붙여넣기</b>에 넣고 적용. 아이콘·배경이 SVG 코드로 들어 있어서 파일이 필요 없어요. <b>이미지 zip</b>을 골랐다면 AI가 준 zip을 <b>파일로 한 번에</b>에 넣어요.</li>
+      </ol>
+      <h3>pack.json 형식</h3>
+      <pre class="card" style="overflow-x:auto;font-size:12.5px;line-height:1.6;white-space:pre">{
+  "format": "HORME_DESIGN_PACK", "version": 2, "name": "새벽 바다",
+  "theme": { "preset": "aurora", "accent": "#8ce3d6", "accent2": "#8f9dff",
+             "iconRadius": 28, "clockFont": "thin", "tagline": "깊고 고요하게" },
+  "background": { "mode": "image", "landscape": "배경-가로.jpg 또는 &lt;svg…&gt;", "portrait": "…", "shade": 0.2 },
+  "layout": "replace",
+  "apps": [
+    { "name": "Chrome", "dock": true, "icon": "Chrome.png 또는 &lt;svg…&gt; 또는 data:image/png;base64,…" },
+    { "name": "내 공부 사이트", "url": "https://…", "icon": "…" }
+  ]
+}</pre>
+      <p>예시 파일: <a href="design-templates/example-design-pack.json" download><code>example-design-pack.json</code></a>. 스튜디오의 <b>디자인 팩 내보내기</b>로 지금 모습을 팩으로 저장해 다른 기기에 그대로 옮길 수도 있어요.</p>
+    </section>
+
+    <section id="motion">
+      <p class="over">07</p><h2>움직임과 효과</h2>
+      <p>설정 → <b>움직임 · 효과</b>. 모든 효과는 손가락이 닿아 있는 동안이나 멈추기까지의 짧은 순간에만 계산해서, 가만히 두면 배터리를 쓰지 않아요.</p>
+      <ul>
+        <li><b>페이지 넘김:</b> 젤리(아이콘이 열마다 살짝 늦게 따라오며 출렁) · 기본 · 깊이(뒤로 물러나며 회전) · 큐브(정육면체처럼 회전).</li>
+        <li><b>쫀득함:</b> 담백하게 · 보통 · 쫀득하게 — 페이지·아이콘·창·폴더가 멈출 때 튕기는 정도. 모두 같은 물리 계산(스프링)으로 움직여요.</li>
+        <li><b>손끝 반응 배경:</b> 누른 곳에서 빛의 물결이 퍼지고, 쓸어 넘기면 손가락을 따라 입자가 비켜나요.</li>
+        <li><b>아이콘 기울기 · 빛 반사:</b> 누르는 쪽으로 아이콘이 눌려 기울고 빛이 손끝을 따라와요. 트랙패드 커서를 올리면 살짝 떠올라 커서 쪽으로 기울어요. 앱을 열 때는 아이콘이 톡 튀며 빛이 번져요.</li>
+        <li><b>배경 깊이감:</b> 페이지를 넘기면 배경 사진·색은 느리게, 입자는 빠르게 따라와 깊이가 느껴져요.</li>
+        <li><b>Dock 확대:</b> Dock 위를 손가락으로 쓸거나 커서를 올리면 아이콘이 커져요.</li>
+        <li>편집 모드에서 끄는 아이콘은 손가락보다 살짝 늦게, 움직이는 방향으로 기울며 따라와요.</li>
+      </ul>
+      <p>기기의 ‘동작 줄이기’를 켜면 튕김과 효과가 꺼지고 차분하게 움직여요.</p>
     </section>
 
     <section id="backup">
-      <p class="over">06</p><h2>백업과 기기 옮기기</h2>
+      <p class="over">08</p><h2>백업과 기기 옮기기</h2>
       <ul>
         <li><b>전체 백업(zip):</b> 앱 배치·위젯·디자인과 사진·아이콘·영상까지 파일 하나. iPad에서는 공유 시트가 열리면 <b>‘파일에 저장’</b>을 고르세요.</li>
         <li><b>설정만(JSON):</b> 사진·영상 없이 가벼운 파일.</li>
@@ -151,13 +201,13 @@
     </section>
 
     <section id="battery">
-      <p class="over">07</p><h2>배터리 아끼기</h2>
+      <p class="over">09</p><h2>배터리 아끼기</h2>
       <p>설정 → <b>배터리</b>에서 정해요. 기본값(<b>자동</b>)만으로도 2.0보다 훨씬 적게 써요.</p>
       <div class="tbl"><table>
         <tr><th>전원 모드</th><th>배경</th><th>그 밖에</th></tr>
         <tr><td><b>절전</b></td><td>멈춘 한 장면</td><td>흐림 효과 끔, 초 단위 표시·시계 초침·사진 자동 넘김 쉼, 배경 영상 일시정지, 날씨는 90분마다</td></tr>
-        <tr><td><b>기본</b></td><td>1초에 12장, 낮은 해상도로 천천히</td><td>위젯·Dock 뒤에는 그리지 않아서 흐림 효과를 다시 계산할 필요가 없어요</td></tr>
-        <tr><td><b>부드럽게</b></td><td>1초에 30장, 선명하게, 색 번짐도 움직임</td><td>콜론 깜빡임 등 모든 효과. 전기를 가장 많이 써요</td></tr>
+        <tr><td><b>기본</b></td><td>1초에 20장(만지는 동안은 화면 주사율 그대로), 낮은 해상도</td><td>위젯·Dock 뒤에는 그리지 않아서 흐림 효과를 다시 계산할 필요가 없어요</td></tr>
+        <tr><td><b>부드럽게</b></td><td>화면 주사율 그대로, 선명하게, 색 번짐도 움직임</td><td>콜론 깜빡임 등 모든 효과. 전기를 가장 많이 써요</td></tr>
       </table></div>
       <p><b>자동</b>은 이렇게 골라요: 배터리 20% 이하(충전 중 아님)·기기 저전력 모드·데이터 절약 모드 → 절전, 충전 중 → 부드럽게, 그 밖에는 기본. iPad·iPhone은 배터리 잔량을 웹 앱에 알려 주지 않아서, 저전력 모드는 화면 갱신 속도가 30번으로 줄어드는 것으로 알아채요. 설정의 ‘지금:’ 줄에 어떤 모드가 왜 골라졌는지 나와요.</p>
       <ul>
@@ -168,17 +218,18 @@
     </section>
 
     <section id="faq">
-      <p class="over">08</p><h2>문제 해결</h2>
+      <p class="over">10</p><h2>문제 해결</h2>
       <h3>배경 영상이 안 나와요</h3><p>MP4(H.264)로 바꿔 보세요. 아이폰으로 찍은 HEVC(MOV)나 AVI·MKV는 기기에 따라 재생되지 않아요. 저전력 모드에서는 자동 재생이 멈출 수 있는데, 화면을 한 번 탭하면 다시 재생돼요.</p>
       <h3>앱이 아니라 웹이 열려요</h3><p>그 앱이 설치돼 있지 않거나 앱 주소를 지원하지 않는 거예요. 앱 편집에서 여는 방식을 ‘앱만’으로 바꾸거나 단축어로 연결하세요.</p>
       <h3>“주소가 유효하지 않음” 알림이 떠요</h3><p>앱이 설치되지 않은 상태에서 앱 주소를 열면 Safari가 띄우는 알림이에요. 잠시 뒤 웹으로 열려요. 거슬리면 여는 방식을 ‘웹만’으로 바꾸세요.</p>
       <h3>홈 화면 아이콘이 예전 것이에요</h3><p>iOS는 설치할 때의 아이콘을 기억해요. 홈 화면의 Ὁρμή 아이콘을 지우고 다시 ‘홈 화면에 추가’ 하세요.</p>
+      <h3>앱을 나갔다 오니 화면이 한쪽에 작게 보여요</h3><p>iPadOS가 홈 화면 웹 앱을 다시 열 때 화면 크기를 잘못 알려 주는 경우가 있어요. 2.2부터는 돌아오는 순간 Ὁρμή가 스스로 크기를 다시 맞춰요. 그래도 그대로라면 iPad를 한 번 돌렸다가 되돌리면 바로 맞춰져요.</p>
       <h3>날씨가 안 나와요</h3><p>인터넷 연결이 필요해요. 위치 권한을 거부했다면 위젯 편집에서 도시를 검색해 주세요.</p>
       <h3>배터리가 걱정돼요</h3><p>설정 → 배터리에서 <b>절전</b>을 고르면 화면에 움직이는 것이 거의 없어져요. 자세한 내용은 <a href="#battery">배터리 아끼기</a>를 보세요. 기기의 ‘동작 줄이기’가 켜져 있으면 배경 움직임은 자동으로 멈춰요.</p>
     </section>
 
     <section id="features">
-      <p class="over">09</p><h2>기능 표</h2>
+      <p class="over">11</p><h2>기능 표</h2>
       <div class="tbl"><table>
         <tr><th>기능</th><th>상태</th><th>설명</th></tr>
         <tr><td>여러 홈 페이지 · 페이지 관리</td><td><span class="tag ok">됨</span></td><td>최대 12쪽, 순서 바꾸기·삭제</td></tr>
@@ -197,7 +248,16 @@
     </section>
 
     <section id="changes">
-      <p class="over">10</p><h2>바뀐 점</h2>
+      <p class="over">12</p><h2>바뀐 점</h2>
+      <h3>2.2 — 조작감 · 디자인 팩</h3>
+      <ul>
+        <li>페이지·드래그·창이 모두 스프링 물리로 움직여요. 손가락 속도가 그대로 이어지고, 움직이는 페이지를 다시 잡을 수 있어요. 손가락이 닿아 있는 동안 배경은 화면 주사율 그대로 그려요.</li>
+        <li>새 효과: 젤리·깊이·큐브 페이지 넘김, 아이콘 기울기와 빛 반사, 트랙패드 호버, 앱 열기 효과, 손끝 물결, 배경 깊이감, Dock 확대.</li>
+        <li>디자인 팩: 배경·아이콘·색을 파일 하나나 AI 답 하나로 한 번에. 아이콘으로 홈 화면 앱 구성까지.</li>
+        <li>기본 앱을 구글 앱으로 바꿨어요. 기존 홈 화면은 설정에서 한 번에 바꿀 수 있어요.</li>
+        <li>iPadOS에서 앱을 나갔다 돌아오면 화면이 한쪽에 작게 그려지던 문제를 고쳤어요.</li>
+        <li>‘배경 움직임’ 위젯의 막대가 다시 부드럽게 움직여요. 기본 모드 배경은 1초 20장(손대는 동안은 최고 속도). 가만히 둘 때 CPU는 2.0의 약 4분의 1이에요.</li>
+      </ul>
       <h3>2.1 — 배터리</h3>
       <ul>
         <li>전원 모드(자동·절전·기본·부드럽게)와 완전한 검정 배경을 추가했어요.</li>
@@ -218,7 +278,7 @@
         <li>접근성: 확대 허용, 버튼 44px 이상, 작은 글씨 대비 개선, 키보드 단축키·<kbd>Shift</kbd>+<kbd>F10</kbd> 메뉴, ‘동작 줄이기’ 존중.</li>
       </ul>
     </section>
-    <footer>Ὁρμή 2.1 · 데이터는 이 기기에만 저장돼요 · 기기의 실제 홈 화면을 바꾸지 않는 독립 웹 앱이에요.</footer>
+    <footer>Ὁρμή 2.2 · 데이터는 이 기기에만 저장돼요 · 기기의 실제 홈 화면을 바꾸지 않는 독립 웹 앱이에요.</footer>
   </main>
 </body>
 </html>

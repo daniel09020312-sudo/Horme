@@ -1,32 +1,41 @@
 {
-  "format": "HORME_INTERFACE_DESIGN",
-  "version": 1,
-  "note": "Ὁρμή 디자인 스튜디오 ⑥단계에서 불러오는 예시 파일",
-  "theme": "aurora",
-  "wallpaper": "",
-  "wallpaperShade": 0.4,
-  "designAccent": "#92e0d3",
-  "designAccent2": "#c8a9ef",
-  "iconRadius": 30,
-  "heroTagline": "나만의 공간, 나만의 움직임.",
-  "motion": true,
-  "icons": [],
-  "dockStyle": "solid",
-  "layoutStyle": "spacious",
-  "widgetSlots": [
-    {
-      "type": "focus",
-      "title": "TODAY’S FOCUS",
-      "text": ""
-    },
-    {
-      "type": "motion",
-      "title": "AMBIENT SPACE",
-      "text": ""
-    }
-  ],
-  "videoFit": "cover",
-  "videoSpeed": 1,
-  "videoDim": 0.45,
-  "videoUrl": ""
+ "format": "HORME_DESIGN_PACK",
+ "version": 2,
+ "name": "새벽 바다 (예시)",
+ "note": "Ὁρμή 설정 → ‘디자인 팩 적용’ 또는 디자인 스튜디오 ① 한 번에 적용에서 이 파일을 고르면 돼요. 아이콘·배경 값에는 SVG 코드, data: 주소, 또는 함께 넣은 파일 이름을 쓸 수 있어요.",
+ "theme": {
+  "preset": "aurora",
+  "accent": "#8ce3d6",
+  "accent2": "#8f9dff",
+  "iconRadius": 28,
+  "widgetStyle": "glass",
+  "dock": "glass",
+  "clockFont": "thin",
+  "glyphTint": "light",
+  "tagline": "깊고 고요하게"
+ },
+ "background": {
+  "mode": "image",
+  "landscape": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2732 2048'><defs><radialGradient id='a' cx='0.12' cy='0.18' r='0.9'><stop offset='0' stop-color='#145a63'/><stop offset='0.55' stop-color='#071722'/><stop offset='1' stop-color='#03070d'/></radialGradient><radialGradient id='b' cx='0.9' cy='0.92' r='0.5'><stop offset='0' stop-color='#3b4fb3' stop-opacity='0.45'/><stop offset='1' stop-color='#3b4fb3' stop-opacity='0'/></radialGradient></defs><rect width='2732' height='2048' fill='url(#a)'/><rect width='2732' height='2048' fill='url(#b)'/></svg>",
+  "portrait": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1536 2048'><defs><radialGradient id='a' cx='0.12' cy='0.18' r='0.9'><stop offset='0' stop-color='#145a63'/><stop offset='0.55' stop-color='#071722'/><stop offset='1' stop-color='#03070d'/></radialGradient><radialGradient id='b' cx='0.9' cy='0.92' r='0.5'><stop offset='0' stop-color='#3b4fb3' stop-opacity='0.45'/><stop offset='1' stop-color='#3b4fb3' stop-opacity='0'/></radialGradient></defs><rect width='1536' height='2048' fill='url(#a)'/><rect width='1536' height='2048' fill='url(#b)'/></svg>",
+  "shade": 0.15
+ },
+ "layout": "add",
+ "apps": [
+  {
+   "name": "Chrome",
+   "dock": true,
+   "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#15606b'/><stop offset='1' stop-color='#081018'/></linearGradient></defs><rect width='1024' height='1024' fill='url(#g)'/><circle cx='512' cy='512' r='220' fill='none' stroke='#e9fbff' stroke-width='52'/></svg>"
+  },
+  {
+   "name": "Gmail",
+   "dock": true,
+   "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#2c3a86'/><stop offset='1' stop-color='#081018'/></linearGradient></defs><rect width='1024' height='1024' fill='url(#g)'/><rect x='262' y='330' width='500' height='364' rx='44' fill='none' stroke='#e9fbff' stroke-width='48'/><path d='M282 360 L512 540 L742 360' fill='none' stroke='#e9fbff' stroke-width='48' stroke-linejoin='round'/></svg>"
+  },
+  {
+   "name": "YouTube",
+   "dock": true,
+   "icon": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#6b1d2c'/><stop offset='1' stop-color='#081018'/></linearGradient></defs><rect width='1024' height='1024' fill='url(#g)'/><path d='M420 330 L720 512 L420 694 Z' fill='#e9fbff'/></svg>"
+  }
+ ]
 }

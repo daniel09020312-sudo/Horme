@@ -161,6 +161,7 @@
     }
     H.applyTheme();
     H.power.init();
+    H.fx.init();
     await H.assets.preload().catch(() => {});
     H.bg.init();
     H.library.init();

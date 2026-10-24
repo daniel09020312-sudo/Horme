@@ -9,5 +9,8 @@
   - Anything that moves checks `H.power.motion()` / `H.power.animate()` and listens to the `power` and `motion-state` events; it must stop when the page is hidden.
   - Infinite CSS animations only behind `body[data-power="smooth"]` (or drive them from the background loop like `.wave-bars`).
   - New glass panels with `backdrop-filter` over the home screen go into the `glass-lite` CSS list and the `GLASS` selector in `js/launcher/bg.js`.
+- Motion: anything that follows a finger uses `H.fx.spring` (velocity-preserving, interruptible); CSS transitions use the generated curves `var(--ease-pop|sheet|snap)` with `var(--pop-ms|sheet-ms|snap-ms)`. While interacting, call `H.bg.boost(ms)` instead of running your own animation loop. Respect `H.reducedMotion()` and `prefs.fx`.
+- Design packs (`js/core/pack.js`): app matching = device apps → catalog (`H.CATALOG()`) → new shortcut. Keep the AI prompt (`pack.prompt`) and the documented format in `시작하기.html#pack` in sync.
+- App ids from v1 must stay resolvable (`H.V1_APPS`); default apps are Google apps (`H.DEFAULT_LAYOUT`).
 - UI text is Korean, friendly 해요체. Keep touch targets ≥ 44px.
 - Never commit personal data (real names, contact info, private URLs).

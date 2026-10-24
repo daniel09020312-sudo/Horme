@@ -344,9 +344,17 @@
       cls: "settings-sheet",
       body: `<div class="form">
         <a class="studio-banner" href="studio.html">${H.svg("palette")}<span><b>디자인 스튜디오</b><small>배경 사진·영상, 아이콘 이미지, 색과 분위기</small></span>${H.svg("chevronR")}</a>
+        <div class="row wrap"><button type="button" class="btn" data-pack>${H.svg("layers")} 디자인 팩 적용 (파일 한 번에)</button><a class="btn ghost" href="studio.html?step=pack">${H.svg("wand")} AI로 디자인 팩 만들기</a></div>
         <h3 class="form-h">테마</h3><div class="theme-chips">${themeChips}</div>
         ${H.ui.switch("set-motion", st.motion.on, "배경 움직임", "입자·물결 애니메이션. 절전 모드이거나 기기의 ‘동작 줄이기’가 켜져 있으면 멈춰요.")}
         <label class="field"><span>입자 수 <small data-density-v>${st.motion.density}</small></span><input type="range" min="0" max="80" step="2" value="${st.motion.density}" data-density></label>
+        <h3 class="form-h">움직임 · 효과</h3>
+        <div class="field"><span>페이지 넘김</span>${H.ui.seg("fx-page", [["jelly", "젤리"], ["slide", "기본"], ["depth", "깊이"], ["cube", "큐브"]], st.prefs.fx.page)}<small>젤리: 넘길 때 아이콘이 열마다 살짝 늦게 따라와요 · 깊이: 뒤로 물러나며 돌아요 · 큐브: 정육면체처럼 돌아요</small></div>
+        <div class="field"><span>쫀득함</span>${H.ui.seg("fx-bounce", [["soft", "담백하게"], ["mid", "보통"], ["chewy", "쫀득하게"]], st.prefs.fx.bounce)}<small>페이지·아이콘·창이 멈출 때 튕기는 정도예요.</small></div>
+        ${H.ui.switch("set-fx-touch", st.prefs.fx.touch, "손끝 반응 배경", "누른 곳에서 빛이 퍼지고, 손가락을 따라 입자가 비켜나요.")}
+        ${H.ui.switch("set-fx-tilt", st.prefs.fx.tilt, "아이콘 기울기 · 빛 반사", "누르는 쪽으로 아이콘이 기울고 빛이 손끝을 따라와요. 트랙패드로 올리면 살짝 떠올라요.")}
+        ${H.ui.switch("set-fx-parallax", st.prefs.fx.parallax, "배경 깊이감", "페이지를 넘기면 배경이 더 느리게, 입자는 더 빠르게 따라와요.")}
+        ${H.ui.switch("set-fx-magnify", st.prefs.fx.magnify, "Dock 확대", "Dock 위를 손가락으로 쓸거나 트랙패드로 올리면 아이콘이 커져요.")}
         <h3 class="form-h">배터리</h3>
         <div class="field"><span>전원 모드</span>${H.ui.seg("power", [["auto", "자동"], ["saver", "절전"], ["normal", "기본"], ["smooth", "부드럽게"]], st.prefs.power)}<div class="power-status" data-power-status></div></div>
         ${H.ui.switch("set-oled", st.prefs.oled, "완전한 검정 배경", "OLED 화면(대부분의 iPhone, 최신 iPad Pro)에서는 검은 부분이 꺼져서 전기를 덜 써요.")}
@@ -354,6 +362,7 @@
         <div class="field"><span>아이콘 크기</span>${H.ui.seg("iconSize", [["s", "작게"], ["m", "보통"], ["l", "크게"]], st.theme.iconSize)}</div>
         <div class="field"><span>간격</span>${H.ui.seg("spacing", [["compact", "촘촘"], ["standard", "보통"], ["spacious", "넓게"]], st.theme.spacing)}</div>
         ${H.ui.switch("set-labels", st.theme.labels, "아이콘 이름 표시")}
+        ${H.home.googlePlan().length ? `<div class="row wrap"><button type="button" class="btn" data-google>${H.svg("refresh")} 애플 앱을 구글 앱으로 바꾸기</button></div><p class="hint">Safari → Chrome, 메일 → Gmail, 캘린더·사진·지도·메모·파일·음악·FaceTime → 구글 앱. 자리는 그대로예요.</p>` : ""}
         <div class="row wrap"><button type="button" class="btn" data-pages>${H.svg("pages")} 페이지 관리</button><button type="button" class="btn" data-edit>${H.svg("grid")} 홈 화면 편집</button><button type="button" class="btn" data-addw>${H.svg("widget")} 위젯 추가</button><button type="button" class="btn" data-standby>${H.svg("clock")} 스탠바이 시계</button></div>
         <h3 class="form-h">시간 · 검색 · 링크</h3>
         <div class="field"><span>시계</span>${H.ui.seg("hour12", [["0", "24시간제"], ["1", "12시간제"]], st.prefs.hour12 ? "1" : "0")}</div>
@@ -383,6 +392,8 @@
       if (name === "hour12") commit((x) => (x.prefs.hour12 = v === "1"));
       if (name === "search" || name === "openWeb") commit((x) => (x.prefs[name] = v));
       if (name === "power") commit((x) => (x.prefs.power = v));
+      if (name === "fx-page") commit((x) => (x.prefs.fx.page = v));
+      if (name === "fx-bounce") commit((x) => (x.prefs.fx.bounce = v));
     });
     const paintPower = () => {
       const el = b.querySelector("[data-power-status]");
@@ -398,6 +409,7 @@
       if (id === "set-labels") commit((x) => (x.theme.labels = e.target.checked));
       if (id === "set-confirm") commit((x) => (x.prefs.confirmDelete = e.target.checked));
       if (id === "set-oled") commit((x) => (x.prefs.oled = e.target.checked));
+      if (id?.startsWith("set-fx-")) commit((x) => (x.prefs.fx[id.slice(7)] = e.target.checked));
     });
     b.querySelector("[data-density]").addEventListener("input", (e) => {
       b.querySelector("[data-density-v]").textContent = e.target.value;
@@ -423,6 +435,18 @@
       if (q("[data-edit]")) {
         s.close();
         H.home.setEditing(true);
+      }
+      if (q("[data-google]")) {
+        const n = H.home.googleSwap();
+        if (n) {
+          q("[data-google]").closest(".row").nextElementSibling?.remove();
+          q("[data-google]").closest(".row").remove();
+          H.ui.toast(`앱 ${n}개를 구글 앱으로 바꿨어요.`, { action: { label: "되돌리기", fn: () => H.store.undo() } });
+        }
+      }
+      if (q("[data-pack]")) {
+        s.close();
+        H.pack.pick();
       }
       if (q("[data-standby]")) {
         s.close();

@@ -122,6 +122,33 @@
     return inDock ? (l.where === "library" ? "Dock" : base + " · Dock") : base;
   };
 
+  /* ---------- Apple apps → Google apps (same spots on the home screen) ---------- */
+  home.googlePlan = () => {
+    const s = S();
+    const onHome = (id) => s.dock.includes(id) || s.pages.some((p) => p.items.includes("a:" + id)) || Object.values(s.folders).some((f) => f.apps.includes(id));
+    return Object.entries(H.GOOGLE_SWAP).filter(([a]) => onHome(a) && H.catalogById(H.GOOGLE_SWAP[a]));
+  };
+  home.googleSwap = () => {
+    const plan = home.googlePlan();
+    if (!plan.length) return 0;
+    H.store.commit(
+      (st) => {
+        for (const [a, g] of plan) {
+          if (!st.apps[g]) st.apps[g] = H.makeApp(H.catalogById(g), Date.now());
+          let placed = st.dock.includes(g) || st.pages.some((p) => p.items.includes("a:" + g)) || Object.values(st.folders).some((f) => f.apps.includes(g));
+          const swapIn = (arr, from, to) => {
+            for (let i = arr.length - 1; i >= 0; i--) if (arr[i] === from) placed ? arr.splice(i, 1) : ((arr[i] = to), (placed = true));
+          };
+          swapIn(st.dock, a, g);
+          st.pages.forEach((p) => swapIn(p.items, "a:" + a, "a:" + g));
+          Object.values(st.folders).forEach((f) => swapIn(f.apps, a, g));
+        }
+      },
+      { label: "구글 앱으로 바꾸기" },
+    );
+    return plan.length;
+  };
+
   /* ---------- mutations ---------- */
   home.removeFromHome = (appId) => {
     const app = S().apps[appId];
@@ -250,6 +277,7 @@
       const app = S().apps[id];
       if (!app) return;
       if (home.editing && tile.dataset.ctx !== "library") return H.sheets.appEditor(id);
+      H.fx?.launch(tile);
       H.launch.app(app);
       if (tile.dataset.ctx === "folder") H.folders.close();
       return;
