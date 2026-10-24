@@ -38,7 +38,7 @@
     if (!t) return "";
     const style = S().theme.widgetStyle;
     return `<${tag} class="tile widget wt-${w.type} ws-${w.size} wst-${style} ${t.bare ? "bare" : ""}" data-key="w:${H.esc(w.id)}" data-type="${w.type}" tabindex="0" role="group" aria-label="${H.esc(t.name)} 위젯">
-      <div class="wg">${H.widgetInner(w, extra)}</div>${editing ? `<button type="button" class="badge del" data-badge="remove" aria-label="위젯 제거">${H.svg("minus")}</button>` : ""}</${tag}>`;
+      <div class="wg">${H.widgetInner(w, extra)}</div>${editing ? `<button type="button" class="badge del" data-badge="remove" aria-label="위젯 제거">${H.badgeGlyphs ? H.badgeGlyphs() : H.svg("minus")}</button>` : ""}</${tag}>`;
   };
 
   /* Context handed to widget act()/tap() handlers. */

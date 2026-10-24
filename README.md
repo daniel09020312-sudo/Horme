@@ -1,4 +1,4 @@
-# Ὁρμή (HORMĒ) 2.2 — Custom Launcher
+# Ὁρμή (HORMĒ) 2.3 — Custom Launcher
 
 iPad · iPhone · Android에서 쓰는 맞춤 홈 화면 **웹 앱(PWA)**.
 움직이는 배경, 위젯 13종, 폴더, 앱 보관함, 초성 검색, 디자인 스튜디오, 디자인 팩(파일·AI 답 하나로 한 번에)을 갖췄어요.
@@ -19,6 +19,14 @@ iPad · iPhone · Android에서 쓰는 맞춤 홈 화면 **웹 앱(PWA)**.
 
 `main`에 푸시하면 자동으로 다시 배포돼요. 설정·사진은 **주소별로** 기기에 저장되니,
 주소를 바꿀 때는 예전 주소에서 설정 → 데이터 → **전체 백업(zip)** 을 만들고 새 주소에서 **백업 불러오기** 하세요.
+
+## 여러 개 다루기 · 카테고리 화면 (2.3)
+- **묶음 끌기**: 아이콘을 끄는 동안 다른 손가락으로 누른 아이콘이 묶음에 더해지고(`drag.js` `stackAdd`), 놓은 자리 뒤에 순서대로 놓여요(`placeExtras`).
+- **선택 모드**: 편집 모드 → 선택. 옮기기(쪽·새 페이지·Dock) · 폴더로 묶기 · 홈에서 빼기 · 삭제. 상태 변경은 `H.home.mutate.*`(state를 직접 고치는 함수) 하나로 모아 드래그와 툴바가 같이 써요.
+- **삭제 칸**: 끄는 동안 위쪽에 `홈에서 빼기` / `삭제` 칸. 놓으면 묶음 전체에 적용, 되돌리기 가능.
+- **빈 페이지**: 편집 모드에서 바로 지우기, 편집을 마치면 자동 정리(`home.pruneEmptyPages`).
+- **카테고리 화면**(`js/launcher/stages.js`, `css/stages.css`): 보관함의 카테고리를 누르면 열려요. 조각(무작위 직선 분할) · 다이얼 · 궤도 · 물감(부드러운 충돌) · 카드 · 키보드 · 스위치 · 지도 · 목록. 카테고리별 선택은 `prefs.stages`에 저장. 화면이 열려 있는 동안만 움직이고, 물감은 절전·동작 끔에서 멈춰 있다가 건드릴 때만 계산해요.
+- **넘기기**: 손을 뗀 뒤 스프링을 미리 계산해 Web Animations로 재생(`fx.settle`) — 합성 단계가 그리므로 JS가 바빠도 끊기지 않아요. 넘기는 동안 배경 캔버스를 다시 그리지 않고, 저장·접근성 갱신은 멈춘 뒤에 해요.
 
 ## 조작감 · 효과 (2.2)
 - 페이지·드래그 고스트는 하나의 스프링 적분기(`js/launcher/fx.js`)로 움직여요: 손가락 속도 이어받기, 러버밴드, 움직이는 중에 다시 잡기.
@@ -62,13 +70,13 @@ public/                  ← 배포되는 사이트
   manifest.webmanifest   설치 정보 · 바로가기
   sw.js                  오프라인 캐시 + 업데이트 알림 (tools/build.py가 만듦)
   _headers               sw.js 캐시 안 함 (Cloudflare Pages · Netlify)
-  css/   base.css(공통) launcher.css widgets.css studio.css
+  css/   base.css(공통) launcher.css widgets.css stages.css studio.css
   js/core/     util(+ iPad 화면 크기 복구) · glyphs · catalog(앱 목록·테마) · schema(데이터 검사·이전) · store(저장·실행 취소)
                assets(IndexedDB 미디어) · ui(시트·메뉴·알림) · theme · power(전원 모드·자동 절전)
                launch(앱/웹 열기) · backup(zip 백업) · pack(디자인 팩·AI 프롬프트)
   js/widgets/  types(위젯 13종) · editor(위젯 편집·추가) · weather(Open-Meteo)
-  js/launcher/ home(페이지·Dock·메뉴·시계 깨우기) · fx(스프링·효과) · pager(스프링 넘기기) · drag(드래그·폴더)
-               folders · library(보관함·빠른 검색)
+  js/launcher/ home(페이지·Dock·메뉴·선택·여러 개 처리·시계 깨우기) · fx(스프링·효과) · pager(스프링 넘기기)
+               drag(드래그·묶음·폴더·삭제 칸) · folders · library(보관함·빠른 검색) · stages(카테고리 화면)
                sheets(앱 편집·설정·페이지) · bg(배경) · standby · main(시작·단축키·업데이트)
   js/studio/   studio · prompts(AI 프롬프트)
   icons/ app-icon-pack/ brand-logos/ design-templates/

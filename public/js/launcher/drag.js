@@ -1,7 +1,10 @@
 /* Ὁρμή launcher — long-press menus and iPad-style drag & drop.
    Normal mode: hold an icon → quick menu; keep holding and move → edit mode + drag.
    Edit mode: move an icon to drag it. Drop in the middle of another app → folder.
-   Drag to the screen edge to change page (a new page appears after the last one). */
+   Drag to the screen edge to change page (a new page appears after the last one).
+   Several at once: while dragging, tap other icons with another finger to add them to the stack
+   (or drag one of the items picked in 선택 mode). Drop on "홈에서 빼기" / "삭제" at the top to
+   remove or delete everything in the stack in one go. */
 (() => {
   "use strict";
   const H = window.H;
@@ -97,7 +100,11 @@
 
   /* ---------- press / long press ---------- */
   function onDown(e) {
-    if (e.button !== 0 || sess) return;
+    if (sess) {
+      if (e.pointerId !== sess.pointer) addByTap(e); // a second finger collects more icons
+      return;
+    }
+    if (e.button !== 0) return;
     if (e.target.closest(".sheet-layer, .ctx-menu, .spotlight-panel input")) return;
     if (e.target.closest("[data-badge], [data-act]")) return;
     const tile = e.target.closest(".tile");
@@ -200,59 +207,189 @@
       edgeDir: 0,
       dotTimer: 0,
       createdPages: [],
+      extra: [], // more keys carried along (a stack)
+      zone: null,
       x: p.x,
       y: p.y,
     };
+    const ib = (tile.querySelector(":scope > .icon, :scope > .wg") || tile).getBoundingClientRect();
+    sess.iconBox = { x: ib.left - r.left, y: ib.top - r.top, w: ib.width, h: ib.height };
+    zones(true);
     document.body.classList.add("dragging");
+    H.fx?.dockEnd();
     H.pager.lock(true);
     H.haptic(12);
     markSource();
     position(e.clientX, e.clientY);
     requestAnimationFrame(() => ghost.classList.add("lifted"));
+    // dragging one of the items picked in 선택 mode carries all of them
+    if (H.home.selecting) {
+      const picked = H.home.isSelected(p.key) ? H.home.selected().filter((k) => k !== p.key) : [];
+      H.home.setSelecting(false);
+      picked.forEach((k) => stackAdd(k, visibleTile(k)));
+    }
   }
 
-  /* The ghost follows the finger on a stiff spring (a hint of weight) and leans into the
-     direction it is moving, like a card being slid across a table. */
+  /* ---------- stacks ---------- */
+  const visibleTile = (key) =>
+    H.$$(`.tile[data-key="${CSS.escape(key)}"]`).find((t) => {
+      if (t.closest("#drag-layer, .sheet-layer, .stage-layer")) return false;
+      const r = t.getBoundingClientRect();
+      return r.width && r.right > 0 && r.left < window.innerWidth;
+    });
+  function addByTap(e) {
+    const tile = e.target.closest?.(".tile");
+    if (!tile || tile.closest("#drag-layer, .sheet-layer, .stage-layer, .ctx-menu")) return;
+    const key = tile.dataset.key;
+    if (!key || key === sess.key || sess.extra.includes(key) || !containerOf(tile)) return;
+    H.home.suppressNextClick();
+    stackAdd(key, tile);
+  }
+  function stackAdd(key, fromTile) {
+    const s = sess;
+    if (!s || key === s.key || s.extra.includes(key)) return;
+    s.extra.push(key);
+    // the icon flies into the stack under the finger
+    const src = fromTile && (fromTile.querySelector(":scope > .icon, :scope > .wg") || fromTile);
+    if (src && !H.reducedMotion()) {
+      const r = src.getBoundingClientRect();
+      const fly = src.cloneNode(true);
+      fly.classList.add("stack-fly");
+      Object.assign(fly.style, { left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px" });
+      H.$("#drag-layer").append(fly);
+      const tx = s.x - s.off.x + s.iconBox.x + s.iconBox.w / 2 - (r.left + r.width / 2);
+      const ty = s.y - s.off.y + s.iconBox.y + s.iconBox.h / 2 - (r.top + r.height / 2);
+      const k = Math.min(1, s.iconBox.w / Math.max(1, r.width));
+      const a = fly.animate([{ transform: "none", opacity: 1 }, { transform: `translate(${tx}px,${ty}px) scale(${k * 0.9})`, opacity: 0.4 }], { duration: 300, easing: "cubic-bezier(.3,.7,.2,1)" });
+      a.onfinish = () => fly.remove();
+    }
+    // the item leaves its place now (restored from the snapshot if the drag is cancelled)
+    H.home.mutate.detach(S(), key); // a folder keeps its apps; only its spot on the page is gone
+    if (H.folders.openId && !S().folders[H.folders.openId]?.apps.length) H.folders.close();
+    H.home.renderPages();
+    H.home.renderDock();
+    H.folders.render();
+    markSource();
+    paintStack();
+    H.haptic(6);
+  }
+  function paintStack() {
+    const s = sess;
+    const g = s.ghost;
+    const n = 1 + s.extra.length;
+    let badge = g.querySelector(":scope > .stack-n");
+    if (!badge) {
+      badge = H.h('<span class="stack-n" aria-hidden="true"></span>');
+      g.append(badge);
+    }
+    badge.textContent = n;
+    badge.style.left = s.iconBox.x + s.iconBox.w - 14 + "px";
+    badge.style.top = s.iconBox.y - 10 + "px";
+    g.classList.add("stacked");
+    // up to three cards peek out behind the dragged icon
+    g.querySelectorAll(":scope > .stack-card").forEach((c) => c.remove());
+    s.extra.slice(-3).forEach((key, i, arr) => {
+      const app = key[0] === "a" ? S().apps[key.slice(2)] : null;
+      const card = H.h(app ? H.home.iconHTML(app) : '<span class="icon"></span>');
+      card.classList.add("stack-card");
+      card.style.cssText += `;left:${s.iconBox.x}px;top:${s.iconBox.y}px;width:${Math.min(s.iconBox.w, s.iconBox.h)}px;height:${Math.min(s.iconBox.w, s.iconBox.h)}px;--i:${arr.length - i}`;
+      g.prepend(card);
+    });
+  }
+  /* put the carried items next to where the dragged one ended up */
+  function placeExtras(s, folderId) {
+    const st = S();
+    const keys = s.extra.filter((k) => (k[0] === "a" ? st.apps[k.slice(2)] : k[0] === "f" ? st.folders[k.slice(2)] : st.widgets[k.slice(2)]));
+    if (!keys.length) return;
+    const pageOf = (k) => st.pages.findIndex((p) => p.items.includes(k));
+    const fallback = () => st.pages[H.clamp(H.pager.index, 0, st.pages.length - 1)];
+    const after = (k, list) => {
+      const pi = pageOf(k);
+      const page = pi >= 0 ? st.pages[pi] : fallback();
+      const at = page.items.indexOf(k);
+      page.items.splice(at >= 0 ? at + 1 : page.items.length, 0, ...list);
+    };
+    const mainId = s.key.slice(2);
+    if (folderId && st.folders[folderId]) {
+      const f = st.folders[folderId];
+      const rest = [];
+      keys.forEach((k) => {
+        if (k[0] === "a") !f.apps.includes(k.slice(2)) && f.apps.push(k.slice(2));
+        else if (k[0] === "f" && k.slice(2) !== folderId) {
+          st.folders[k.slice(2)].apps.forEach((id) => !f.apps.includes(id) && f.apps.push(id));
+          delete st.folders[k.slice(2)];
+        } else rest.push(k);
+      });
+      if (rest.length) after("f:" + folderId, rest);
+      return;
+    }
+    if (pageOf(s.key) >= 0) return after(s.key, keys);
+    const apps = keys.filter((k) => k[0] === "a");
+    const others = keys.filter((k) => k[0] !== "a");
+    if (s.t === "a" && st.dock.includes(mainId)) {
+      const room = Math.max(0, H.schema.MAX_DOCK - st.dock.length);
+      const take = apps.slice(0, room);
+      st.dock.splice(st.dock.indexOf(mainId) + 1, 0, ...take.map((k) => k.slice(2)));
+      const left = [...apps.slice(room), ...others];
+      if (apps.length > room) H.ui.toast(`Dock 자리가 모자라 나머지는 홈 화면에 뒀어요.`);
+      if (left.length) fallback().items.push(...left);
+      return;
+    }
+    const f = s.t === "a" && Object.values(st.folders).find((x) => x.apps.includes(mainId));
+    if (f) {
+      f.apps.splice(f.apps.indexOf(mainId) + 1, 0, ...apps.map((k) => k.slice(2)).filter((id) => !f.apps.includes(id)));
+      if (others.length) after("f:" + f.id, others);
+      return;
+    }
+    fallback().items.push(...keys);
+  }
+
+  /* ---------- drop zones: 홈에서 빼기 / 삭제 ---------- */
+  function zones(on) {
+    let el = H.$("#drop-zones");
+    if (!el) {
+      el = H.h(`<div id="drop-zones" aria-hidden="true">
+        <div class="dz" data-dropzone="remove">${H.svg("minus")}<b>홈에서 빼기</b></div>
+        <div class="dz danger" data-dropzone="delete">${H.svg("trash")}<b>삭제</b></div></div>`);
+      H.$("#drag-layer").append(el);
+    }
+    el.classList.toggle("on", on);
+    if (!on) el.querySelectorAll(".dz.hot").forEach((z) => z.classList.remove("hot"));
+  }
+  function zoneHint() {
+    H.$$("#drop-zones .dz").forEach((z) => z.classList.toggle("hot", z.dataset.dropzone === sess?.zone));
+    sess?.ghost.classList.toggle("over-zone", !!sess?.zone);
+  }
+
+  /* The ghost sits exactly under the finger (no lag) and leans a little into the direction it is
+     moving, like a card slid across a table; the lean relaxes back once the finger stops. */
   let follow = 0;
   function position(x, y) {
     const s = sess;
+    const now = performance.now();
+    if (s.lx !== undefined && now > s.lt) {
+      const vx = ((x - s.lx) / (now - s.lt)) * 1000; // px/s
+      s.vx = s.vx === undefined ? vx : s.vx * 0.6 + vx * 0.4;
+    }
+    s.lx = x;
+    s.lt = now;
     s.x = x;
     s.y = y;
-    s.tx = x - s.off.x;
-    s.ty = y - s.off.y;
-    if (s.gx === undefined || H.reducedMotion()) {
-      s.gx = s.tx;
-      s.gy = s.ty;
-      s.vx = s.vy = s.rot = 0;
-      paintGhost(s);
-      return;
-    }
-    if (!follow) follow = requestAnimationFrame(stepGhost);
+    paintGhost(s);
+    if (!follow && !H.reducedMotion()) follow = requestAnimationFrame(relaxLean);
   }
   function paintGhost(s) {
-    s.ghost.style.transform = `translate3d(${s.gx.toFixed(2)}px, ${s.gy.toFixed(2)}px, 0) rotate(${s.rot.toFixed(2)}deg)`;
+    const target = H.reducedMotion() ? 0 : Math.max(-8, Math.min(8, (s.vx || 0) * 0.008));
+    s.rot = s.rot === undefined ? 0 : s.rot + (target - s.rot) * 0.35;
+    s.ghost.style.transform = `translate3d(${(s.x - s.off.x).toFixed(1)}px, ${(s.y - s.off.y).toFixed(1)}px, 0) rotate(${s.rot.toFixed(2)}deg)`;
   }
-  function stepGhost(now) {
+  function relaxLean() {
     follow = 0;
     const s = sess;
     if (!s) return;
-    let dt = Math.min(0.05, (now - (s.lt || now - 16)) / 1000) || 1 / 60;
-    s.lt = now;
-    const k = 1100;
-    const c = 2 * Math.sqrt(k) * 0.86;
-    while (dt > 1e-6) {
-      const h = Math.min(dt, 1 / 240);
-      s.vx += (-k * (s.gx - s.tx) - c * s.vx) * h;
-      s.vy += (-k * (s.gy - s.ty) - c * s.vy) * h;
-      s.gx += s.vx * h;
-      s.gy += s.vy * h;
-      dt -= h;
-    }
-    const lean = Math.max(-11, Math.min(11, s.vx * 0.011));
-    s.rot += (lean - s.rot) * 0.25;
+    if (performance.now() - s.lt > 40) s.vx = (s.vx || 0) * 0.7; // finger resting: let the lean settle
     paintGhost(s);
-    const resting = Math.abs(s.gx - s.tx) < 0.3 && Math.abs(s.gy - s.ty) < 0.3 && Math.abs(s.vx) + Math.abs(s.vy) < 4 && Math.abs(s.rot) < 0.05;
-    if (!resting) follow = requestAnimationFrame(stepGhost);
+    if (Math.abs(s.rot) > 0.05 || Math.abs(s.vx || 0) > 5) follow = requestAnimationFrame(relaxLean);
   }
 
   let raf = 0;
@@ -276,18 +413,39 @@
   function hitTest(x, y) {
     const vw = window.innerWidth;
     const el = document.elementFromPoint(x, y);
-    // --- page edges ---
-    const edge = x < 26 ? -1 : x > vw - 26 ? 1 : 0;
+    // --- drop zones at the top ---
+    const dz = el?.closest?.("[data-dropzone]");
+    if (dz) {
+      if (sess.zone !== dz.dataset.dropzone) {
+        sess.zone = dz.dataset.dropzone;
+        zoneHint();
+        H.haptic(6);
+      }
+      clearTimeout(sess.pendingTimer);
+      sess.pendingSig = null;
+      sess.pendingApply = null;
+      clearMerge();
+      return;
+    }
+    if (sess.zone) {
+      sess.zone = null;
+      zoneHint();
+    }
+    // --- page edges (a finger-wide zone; the outermost pixels belong to the system's own gestures) ---
+    const zone = Math.max(44, Math.min(96, vw * 0.065));
+    const edge = x < zone ? -1 : x > vw - zone ? 1 : 0;
     const overBottom = el?.closest(".bottom");
     if (edge && !overBottom) {
-      if (sess.edgeDir !== edge) {
+      if (sess.edgeDir !== edge && !H.pager.moving) {
         clearTimeout(sess.edgeTimer);
         sess.edgeDir = edge;
-        sess.edgeTimer = setTimeout(() => flipPage(edge), 620);
+        edgeHint(edge);
+        sess.edgeTimer = setTimeout(() => flipPage(edge), 560);
       }
     } else if (sess.edgeDir) {
       clearTimeout(sess.edgeTimer);
       sess.edgeDir = 0;
+      edgeHint(0);
     }
     if (!el) return;
     // --- page dots ---
@@ -437,9 +595,21 @@
       target = s.pages.length - 1;
     }
     if (target < 0) return;
+    H.haptic(8);
     H.pager.go(target);
     sess.edgeDir = 0;
-    setTimeout(() => sess && hitTest(sess.x, sess.y), 450);
+    edgeHint(0);
+    // measure the new page only once it stands still (holding at the edge flips again)
+    H.pager.afterSettle(() => sess && hitTest(sess.x, sess.y));
+  }
+  /* a glowing strip at the screen edge that fills up while you hold an icon there */
+  function edgeHint(dir) {
+    let el = H.$("#drag-edge");
+    if (!el) {
+      el = H.h('<div id="drag-edge" aria-hidden="true"><i></i></div>');
+      H.$("#drag-layer").append(el);
+    }
+    el.className = dir ? (dir < 0 ? "left on" : "right on") : "";
   }
 
   function finish(cancelled = false) {
@@ -449,24 +619,44 @@
     clearTimeout(s.dotTimer);
     clearTimeout(s.mergeTimer);
     clearTimeout(s.pendingTimer);
-    if (!cancelled && !s.merge && s.pendingApply) s.pendingApply();
+    if (!cancelled && !s.merge && !s.zone && s.pendingApply) s.pendingApply();
     let label = "배치 변경";
+    let zoneMsg = "";
     if (cancelled && s.snap) {
       H.store.state = H.schema.sanitize(JSON.parse(s.snap));
+    } else if (s.zone) {
+      const keys = [s.key, ...s.extra];
+      const n = keys.length;
+      if (s.zone === "delete") {
+        H.home.mutate.del(S(), keys);
+        label = "삭제";
+        zoneMsg = n > 1 ? `${n}개를 삭제했어요.` : "삭제했어요.";
+      } else {
+        H.home.mutate.remove(S(), keys);
+        label = "홈에서 빼기";
+        zoneMsg = keys.some((k) => k[0] === "a") ? `${n > 1 ? n + "개를 " : ""}홈 화면에서 뺐어요. 앱은 보관함에 남아 있어요.` : "홈 화면에서 뺐어요.";
+      }
     } else if (s.merge) {
-      label = mergeInto(s.merge, s.key) || label;
-    } else if (!s.cur && s.fromLibrary) {
-      // dropped from the library on nothing useful → put it at the end of the current page
-      const p = S().pages[H.clamp(H.pager.index, 0, S().pages.length - 1)];
-      removeEverywhere(s.key);
-      p.items.push(s.key);
+      const m = mergeInto(s.merge, s.key);
+      label = m?.label || label;
+      placeExtras(s, m?.folderId);
+    } else {
+      if (!s.cur && s.fromLibrary) {
+        // dropped from the library on nothing useful → put it at the end of the current page
+        const p = S().pages[H.clamp(H.pager.index, 0, S().pages.length - 1)];
+        removeEverywhere(s.key);
+        p.items.push(s.key);
+      }
+      placeExtras(s);
     }
     // drop pages created during this drag that stayed empty
     S().pages = S().pages.filter((p) => !s.createdPages.includes(p.id) || p.items.length);
     sess = null;
+    edgeHint(0);
+    zones(false);
     document.body.classList.remove("dragging");
     H.pager.lock(false);
-    const target = H.$$(`.tile[data-key="${CSS.escape(s.key)}"]`).find((t) => !t.closest(".page.library") && t.closest("[data-container]"));
+    const target = s.zone ? null : H.$$(`.tile[data-key="${CSS.escape(s.key)}"]`).find((t) => !t.closest(".page.library") && t.closest("[data-container]"));
     const ghost = s.ghost;
     const settle = () => {
       ghost.remove();
@@ -483,9 +673,13 @@
       ghost.style.transform = `translate3d(${r.left}px, ${r.top}px, 0)`;
       const ms = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--sheet-ms")) || 300;
       setTimeout(settle, Math.min(700, ms));
+    } else if (s.zone && !H.reducedMotion()) {
+      ghost.classList.add("zoned"); // shrinks into the drop zone
+      setTimeout(settle, 260);
     } else settle();
     H.store.commit(() => {}, { undo: false });
     if (H.store.pushUndo(s.snap, label)) H.emit("change", { label, undoable: true, scope: "all" });
+    if (zoneMsg) H.ui.toast(zoneMsg, { action: { label: "되돌리기", fn: () => H.store.undo() } });
     H.home.suppressNextClick();
     if (H.pager.index > S().pages.length) H.pager.go(S().pages.length - 1, { animate: false });
   }
@@ -502,7 +696,7 @@
       s.dock = s.dock.filter((x) => x !== appId);
       if (!f.apps.includes(appId)) f.apps.push(appId);
       H.ui.toast(`‘${f.name}’ 폴더에 넣었어요.`);
-      return "폴더에 넣기";
+      return { label: "폴더에 넣기", folderId: f.id };
     }
     const targetApp = s.apps[tid];
     if (!targetApp || tid === appId) return null;
@@ -519,7 +713,7 @@
     s.folders[fid] = { id: fid, name, apps: [tid, appId] };
     p.items.splice(at, 1, "f:" + fid);
     H.ui.toast(`‘${name}’ 폴더를 만들었어요. 길게 눌러 이름을 바꿀 수 있어요.`);
-    return "폴더 만들기";
+    return { label: "폴더 만들기", folderId: fid };
   }
 
   drag.init = () => {
@@ -527,6 +721,15 @@
     document.addEventListener("pointermove", onMove, { passive: false });
     document.addEventListener("pointerup", onUp);
     document.addEventListener("pointercancel", onCancel);
+    // iOS picks "scroll the page" at touch start when the tile allows vertical panning; once an icon
+    // is held (menu shown) or being dragged, cancel the touch moves so the drag isn't interrupted.
+    document.addEventListener(
+      "touchmove",
+      (e) => {
+        if ((sess || (press && (press.long || H.home.editing))) && e.cancelable) e.preventDefault();
+      },
+      { passive: false },
+    );
     // Stop native image/text drag and the iOS image callout on icons
     document.addEventListener("dragstart", (e) => {
       if (e.target.closest?.(".tile")) e.preventDefault();

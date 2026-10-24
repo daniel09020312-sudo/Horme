@@ -1,10 +1,10 @@
 /* Ὁρμή launcher — page swiping that follows the finger, trackpad/mouse-wheel paging, dots.
-   Movement is physics, not a fixed-length CSS transition:
-   - while dragging, the track follows the finger 1:1 (updated once per frame), with a rubber band
-     past the first and last page;
-   - on release a spring takes over with the finger's velocity, so a flick keeps its speed and settles
-     with a small bounce;
-   - touching a page that is still moving catches it where it is (no jump, no waiting). */
+   - While a finger is down, only one thing changes per frame: the track's transform (plus the
+     chosen page effect). Moves are coalesced to one update per frame.
+   - On release the spring is precomputed and played by the browser's compositor (fx.settle), so the
+     glide stays smooth even when JavaScript is busy. Saving the page index and accessibility updates
+     wait until the page has settled.
+   - Touching a page that is still moving catches it exactly where it is. */
 (() => {
   "use strict";
   const H = window.H;
@@ -12,10 +12,13 @@
   const pager = { index: 0, locked: false, x: 0, moving: false };
   let consumed = false;
   let g = null; // active gesture
-  let anim = null; // running spring
+  let ctrl = null; // running compositor settle
+  let jsAnim = null; // fallback spring (browsers without Web Animations)
   let frameReq = 0;
   let pendingX = null;
   let pendingV = 0;
+  let afterSettle = [];
+  let dirty = false; // page index changed → save + a11y after settling
 
   const viewport = () => H.$("#viewport");
   const track = () => H.$("#track");
@@ -27,44 +30,90 @@
     consumed = false;
     return c;
   };
+  /* where the track really is right now (also in the middle of a compositor settle) */
+  pager.currentX = () => (ctrl ? ctrl.now().x : pager.x);
+  /* run fn once the pages stand still */
+  pager.afterSettle = (fn) => (pager.moving ? afterSettle.push(fn) : fn());
 
-  /* draw the track at x (px) moving at v (px/s) */
+  /* paint the track at x (px) moving at v (px/s) */
   function render(x, v = 0) {
     pager.x = x;
     track().style.transform = `translate3d(${x.toFixed(2)}px,0,0)`;
     H.fx?.pageFx(x, v, width());
-    H.bg?.boost(260);
   }
   function settled() {
     pager.moving = false;
-    document.body.classList.remove("paging");
+    track().classList.remove("paging");
     H.fx?.pageRest();
     H.bg?.parallax(pager.x, width());
+    if (dirty) {
+      dirty = false;
+      H.store.save();
+      markInert();
+    }
+    const q = afterSettle;
+    afterSettle = [];
+    q.forEach((fn) => {
+      try {
+        fn();
+      } catch (e) {
+        console.error(e);
+      }
+    });
   }
+  /* stop any animation where it is (the track keeps that position) */
   function stopAnim() {
-    anim?.stop();
-    anim = null;
+    if (ctrl) {
+      const p = ctrl.stop();
+      ctrl = null;
+      if (p) {
+        render(p.x, p.v);
+        p.end();
+      }
+    }
+    jsAnim?.stop();
+    jsAnim = null;
   }
   function setX(px, animate, v = 0) {
     stopAnim();
-    if (!animate || H.reducedMotion()) {
+    const from = pager.x;
+    if (!animate || H.reducedMotion() || Math.abs(px - from) < 0.5) {
       render(px, 0);
       settled();
       return;
     }
     pager.moving = true;
-    document.body.classList.add("paging");
-    anim = H.fx.spring({
-      from: pager.x,
+    track().classList.add("paging");
+    const zeta = Math.max(0.7, H.fx.zeta(0.04));
+    const w = width();
+    ctrl = H.fx.settle({
+      track: track(),
+      x0: from,
+      v0: v,
+      to: px,
+      w,
+      k: 230,
+      zeta,
+      onDone: (end) => {
+        ctrl = null;
+        render(px, 0);
+        end();
+        settled();
+      },
+    });
+    if (ctrl) return;
+    // no Web Animations: animate from JavaScript
+    jsAnim = H.fx.spring({
+      from,
       to: px,
       v,
       k: 230,
-      zeta: Math.max(0.7, H.fx.zeta(0.04)),
+      zeta,
       restX: 0.5,
       restV: 12,
       onUpdate: (x, vv) => render(x, vv),
       onDone: () => {
-        anim = null;
+        jsAnim = null;
         settled();
       },
     });
@@ -99,17 +148,21 @@
     pager.measure();
     pager.index = H.clamp(S().page, 0, pager.count() - 1);
     setX(-pager.index * width(), false);
-    markActive();
+    markDots();
+    markInert();
     H.fx?.measureCols();
   };
 
-  function markActive() {
+  function markDots() {
     H.$$("#dots .dot").forEach((d) => d.classList.toggle("on", Number(d.dataset.jump) === pager.index));
+    document.body.classList.toggle("on-library", pager.index === pager.libraryIndex());
+  }
+  function markInert() {
     H.$$("#track > .page").forEach((p, i) => {
-      p.toggleAttribute("inert", i !== pager.index && !document.body.classList.contains("dragging"));
+      const off = i !== pager.index && !document.body.classList.contains("dragging");
+      if (p.hasAttribute("inert") !== off) p.toggleAttribute("inert", off);
       p.setAttribute("aria-hidden", String(i !== pager.index));
     });
-    document.body.classList.toggle("on-library", pager.index === pager.libraryIndex());
   }
 
   pager.go = (i, { animate = true, v = 0 } = {}) => {
@@ -117,12 +170,17 @@
     const next = H.clamp(i, 0, max);
     const changed = next !== pager.index;
     pager.index = next;
-    setX(-next * width(), animate, v);
     if (S().page !== next) {
       S().page = next;
-      H.store.save();
+      dirty = true;
     }
-    markActive();
+    markDots();
+    setX(-next * width(), animate, v);
+    if (dirty && !pager.moving) {
+      dirty = false;
+      H.store.save();
+      markInert();
+    }
     if (changed) H.emit("page", next);
     return changed;
   };
@@ -131,7 +189,7 @@
     if (!g) return;
     const wasX = g.dir === "x";
     g = null;
-    document.body.classList.remove("swiping");
+    track().classList.remove("swiping");
     if (wasX) setX(-pager.index * width(), true);
     setTimeout(() => (consumed = false), 50);
   };
@@ -139,7 +197,7 @@
   pager.prev = () => pager.go(pager.index - 1);
   pager.lock = (on) => {
     pager.locked = on;
-    if (!on) markActive();
+    if (!on) markInert();
   };
 
   /* iOS-style rubber band: resistance grows the further you pull */
@@ -147,22 +205,21 @@
 
   /* ---------- touch / pen / mouse swipe ---------- */
   function onDown(e) {
-    if (e.button !== 0 || g || H.ui.isOpen()) return;
+    if (e.button !== 0 || g || H.ui.isOpen() || H.drag?.active()) return;
     if (e.target.closest("input, textarea, select, .ctx-menu, [data-noswipe]")) return;
     if (H.home.editing && e.target.closest(".tile")) return; // tiles are dragged in edit mode
     if (e.pointerType === "mouse" && e.target.closest(".tile, button, a")) return; // mouse: swipe only on empty space
-    const caught = !!anim; // a page still settling: grab it where it is
-    const base = pager.x;
+    const caught = pager.moving; // a page still settling: grab it where it is
     if (caught) {
       stopAnim();
       consumed = true; // this touch is "stop the page", not a tap on whatever is under it
     }
-    g = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, base, dir: caught ? "x" : null, hist: [[performance.now(), e.clientX]], caught };
+    g = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, base: pager.x, dir: caught ? "x" : null, hist: [[performance.now(), e.clientX]], caught };
     if (caught) {
       try {
         viewport().setPointerCapture(e.pointerId);
       } catch (err) {}
-      document.body.classList.add("swiping", "paging");
+      track().classList.add("swiping", "paging");
       pager.moving = true;
     }
   }
@@ -186,9 +243,9 @@
       } catch (err) {}
       consumed = true;
       H.fx?.releasePress();
-      document.body.classList.add("swiping", "paging");
+      track().classList.add("swiping", "paging");
       pager.moving = true;
-      g.x0 = e.clientX - Math.sign(dx) * 0.001; // start following from here (no jump after the slop)
+      g.x0 = e.clientX - Math.sign(dx) * 0.001; // follow from here (no jump after the slop)
     }
     const now = performance.now();
     g.x = e.clientX;
@@ -212,7 +269,7 @@
     if (!g || e.pointerId !== g.id) return;
     const gesture = g;
     g = null;
-    document.body.classList.remove("swiping");
+    track().classList.remove("swiping");
     if (gesture.dir !== "x") return;
     if (frameReq) {
       cancelAnimationFrame(frameReq);
@@ -220,9 +277,9 @@
       if (pendingX != null) render(pendingX, pendingV);
       pendingX = null;
     }
-    // finger lifted a moment ago without moving: no fling
+    // finger lifted a moment after it stopped moving: no fling
     const last = gesture.hist[gesture.hist.length - 1];
-    let v = performance.now() - last[0] > 80 ? 0 : velocity(gesture);
+    const v = performance.now() - last[0] > 80 ? 0 : velocity(gesture);
     const w = width();
     const pos = -pager.x / w; // continuous page position
     // the page this drag started from (a caught, still-moving page counts as the nearest one)
@@ -242,7 +299,7 @@
   function onCancel(e) {
     if (!g || e.pointerId !== g.id) return;
     g = null;
-    document.body.classList.remove("swiping");
+    track().classList.remove("swiping");
     setX(-pager.index * width(), true);
   }
 

@@ -88,9 +88,11 @@
     cats.innerHTML = lib.groups().map(cardHTML).join("");
   };
 
-  function openCategory(name) {
+  function openCategory(name, { list = false } = {}) {
     const g = lib.groups().find((x) => x.name === name);
     if (!g) return;
+    // real categories open their own full-screen way of choosing (stages.js)
+    if (!g.smart && !list && H.stages) return H.stages.open(name, g.apps);
     const s = H.ui.sheet({
       title: name,
       sub: `${g.apps.length}개 앱 · 누르면 실행, 길게 누르면 메뉴`,

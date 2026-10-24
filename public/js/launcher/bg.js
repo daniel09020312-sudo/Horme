@@ -7,9 +7,8 @@
      requestAnimationFrame so nothing is drawn while the page is hidden.
    - In glass-lite mode (see power.js) the canvas leaves the area behind glass panels empty, so the
      panels need no live blur.
-   - While a finger is on the screen (or a page is settling) the canvas runs at the display's full
-     rate, so touch ripples, the finger trail and swipe parallax are perfectly smooth; it drops back
-     to the power level's rate a moment after you let go.
+   - A tap's light ripple is drawn at the display's full rate for a moment; page swipes never make
+     the canvas redraw faster (the far background layers' parallax is a compositor transform).
    - Everything stops in power saver, when hidden, behind the standby clock or a full-screen
      sheet; a video pauses and an animated image is swapped for a still frame in the same cases. */
 (() => {
@@ -21,9 +20,8 @@
   let canvas, ctx, haze, hctx, imgEl, vid, anim, still, shade;
   let W = 0, Hh = 0, dpr = 1, parts = [], t = 0, overlay = false, mode = "ambient";
   let timer = 0, raf = 0, lastFrame = 0, staticDirty = true, hazeDirty = true;
-  let boostUntil = 0, shiftP = 0, lastBgx = 0, bgEl = null;
+  let boostUntil = 0, lastBgx = 0, bgEl = null;
   const ripples = [];
-  const fingers = new Map(); // pointerId → {x, y, mx, my} (movement since the last frame)
   const HAZE_SCALE = 1 / 6;
   let videoSrc = "", animSrc = "", imageKey = "", imageT = 0, primed = false;
 
@@ -113,7 +111,7 @@
     const live = c.contains("dragging") || c.contains("editing") || performance.now() < movingUntil;
     const rs = !glassRects || live ? (glassRects = measureGlass()) : glassRects;
     if (!rs.length) return false;
-    const dx = (H.pager?.x || 0) - restX;
+    const dx = (H.pager?.currentX?.() ?? H.pager?.x ?? 0) - restX;
     ctx.beginPath();
     ctx.rect(0, 0, W, Hh);
     // inset a little: the panels have rounded corners and a 1px border
@@ -131,7 +129,6 @@
     // the waves drift slower in "normal" so they stay smooth at its lower frame rate
     t += dt * 0.225 * (P().mode === "smooth" ? 1 : 0.5);
     const k = dt * 30; // particle speeds were tuned per 1/30 s
-    stir(dt);
     if (!overlay && (hazeDirty || (dt && P().level().haze))) drawHaze();
     ctx.clearRect(0, 0, W, Hh);
     ctx.save();
@@ -165,9 +162,8 @@
         if (p.y > Hh + 4) p.y = -4;
         if (p.y < -4) p.y = Hh + 4;
       }
-      const sx = ((((p.x + shiftP + 4) % span) + span) % span) - 4; // parallax, wrapped
       ctx.beginPath();
-      ctx.arc(sx, p.y, p.r, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(225,229,246,${0.15 + (Math.sin(p.s) + 1) * 0.12})`;
       ctx.fill();
     }
@@ -180,11 +176,9 @@
   const touchOn = () => !!H.fx?.on("touch") && P().animate() && P().level().fps > 0 && canvasOn();
   function impulse(x, y, R, strength, ux, uy) {
     const n = Math.min(parts.length, S().motion.density);
-    const span = W + 8;
     for (let i = 0; i < n; i++) {
       const p = parts[i];
-      const sx = ((((p.x + shiftP + 4) % span) + span) % span) - 4;
-      const dx = sx - x;
+      const dx = p.x - x;
       const dy = p.y - y;
       const d = Math.hypot(dx, dy) || 1;
       if (d > R) continue;
@@ -198,26 +192,8 @@
       }
     }
   }
-  function stir(dt) {
-    if (!dt || !fingers.size) return;
-    fingers.forEach((f) => {
-      const m = Math.hypot(f.mx, f.my);
-      if (m > 0.5) impulse(f.x, f.y, 120, Math.min(900, (m / dt) * 0.5), f.mx / m, f.my / m);
-      f.mx = 0;
-      f.my = 0;
-    });
-  }
   function drawTouch(c1, c2) {
     const now = performance.now();
-    if (fingers.size && touchOn()) {
-      fingers.forEach((f) => {
-        const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, 110);
-        g.addColorStop(0, `rgba(${c1.join(",")},0.12)`);
-        g.addColorStop(1, `rgba(${c1.join(",")},0)`);
-        ctx.fillStyle = g;
-        ctx.fillRect(f.x - 110, f.y - 110, 220, 220);
-      });
-    }
     for (let i = ripples.length - 1; i >= 0; i--) {
       const r = ripples[i];
       const a = (now - r.t0) / 1000 / (0.95 + r.s * 0.15);
@@ -255,40 +231,31 @@
     bg.boost(1500);
   };
   function onPointerDown(e) {
-    if (!touchOn() || e.button > 0 || e.target.closest?.(".sheet-layer, .spotlight, .folder-layer, .ctx-menu, .standby, input, textarea")) return;
-    fingers.set(e.pointerId, { x: e.clientX, y: e.clientY, mx: 0, my: 0 });
+    if (!touchOn() || e.button > 0 || e.target.closest?.(".sheet-layer, .spotlight, .folder-layer, .ctx-menu, .standby, .stage-layer, input, textarea")) return;
     bg.touch(e.clientX, e.clientY, e.pointerType === "mouse" ? 0.7 : 1);
   }
-  function onPointerMove(e) {
-    const f = fingers.get(e.pointerId);
-    if (!f) return;
-    f.mx += e.clientX - f.x;
-    f.my += e.clientY - f.y;
-    f.x = e.clientX;
-    f.y = e.clientY;
-    bg.boost(700);
-  }
-  function onPointerEnd(e) {
-    if (fingers.delete(e.pointerId)) bg.boost(1200);
-  }
 
-  /* ---------- parallax: background layers trail the pages at different depths ---------- */
+  /* ---------- parallax: the far background layers trail the pages ----------
+     Finger-driven frames set one CSS variable; the release glide gets compositor keyframes
+     (parallaxPlan → fx.settle). */
   const parallaxOn = () => !!H.fx?.on("parallax") && P().animate();
+  const PAR_LAYERS = ["#bg-haze", "#bg-image", "#bg-video", "#bg-anim", "#bg-still"];
+  const bgxAt = (x, w) => {
+    const n = H.pager?.count() || 1;
+    return n > 1 && w ? -(-x / w / (n - 1) - 0.5) * 72 : 0; // ±36 px across all pages
+  };
   bg.parallax = (x, w) => {
     if (!bgEl) return;
-    let bgx = 0;
-    let sp = 0;
-    if (parallaxOn() && w) {
-      const n = H.pager?.count() || 1;
-      const frac = n > 1 ? -x / w / (n - 1) - 0.5 : 0; // −0.5 … 0.5 across all pages
-      bgx = -frac * 72; // far layer (photo, video, colour haze): ±36 px
-      sp = -frac * 180; // near layer (particles): ±90 px
-    }
+    const bgx = parallaxOn() ? bgxAt(x, w) : 0;
     if (Math.abs(bgx - lastBgx) > 0.04) {
       lastBgx = bgx;
       bgEl.style.setProperty("--bgx", bgx.toFixed(2) + "px");
     }
-    shiftP = sp;
+  };
+  bg.parallaxPlan = (w) => {
+    if (!parallaxOn() || !bgEl) return null;
+    const els = PAR_LAYERS.map((sel) => H.$(sel)).filter((el) => el && getComputedStyle(el).display !== "none");
+    return els.length ? { els, at: (x) => bgxAt(x, w) } : null;
   };
 
   /* ---------- scheduler ---------- */
@@ -296,10 +263,11 @@
   // a full-screen sheet, folder or search covers the background: no need to keep drawing it
   const covered = () => {
     const c = document.body.classList;
-    return c.contains("sheet-open") || c.contains("folder-open") || c.contains("spot-open");
+    return c.contains("sheet-open") || c.contains("folder-open") || c.contains("spot-open") || c.contains("stage-open");
   };
   const running = () => P().animate() && P().level().fps > 0 && !covered() && canvasOn();
-  const boosted = () => performance.now() < boostUntil;
+  // a tap's ripple runs at full rate — but never while pages are moving (keeps swipes light)
+  const boosted = () => performance.now() < boostUntil && !H.pager?.moving;
   function stop() {
     clearTimeout(timer);
     timer = 0;
@@ -478,7 +446,7 @@
     if (mode === "animated" && !S().assets["bg:video"]) mode = "ambient";
     document.body.dataset.bg = mode;
     imgEl.style.filter = b.blur ? `blur(${b.blur}px)` : "";
-    imgEl.style.transform = b.blur ? "scale(1.06)" : "";
+    imgEl.style.scale = b.blur ? "1.06" : ""; // `scale`, so the parallax transform stays free
     imgEl.style.backgroundSize = b.fit;
     shade.style.opacity = mode === "image" ? b.shade : mode === "video" || mode === "animated" ? b.dim : 0;
     P().glass();
@@ -533,11 +501,7 @@
     });
     H.listen("editing", relayout);
     H.listen("change", dropRects);
-    const po = { passive: true, capture: true };
-    document.addEventListener("pointerdown", onPointerDown, po);
-    document.addEventListener("pointermove", onPointerMove, po);
-    document.addEventListener("pointerup", onPointerEnd, po);
-    document.addEventListener("pointercancel", onPointerEnd, po);
+    document.addEventListener("pointerdown", onPointerDown, { passive: true, capture: true });
     document.addEventListener(
       "scroll",
       () => {

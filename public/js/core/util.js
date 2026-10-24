@@ -3,7 +3,7 @@
   "use strict";
   const H = (window.H = window.H || {});
 
-  H.VERSION = "2.2.0";
+  H.VERSION = "2.3.0";
   H.BUILD = "2026-10-24";
 
   H.$ = (sel, root = document) => root.querySelector(sel);
@@ -279,7 +279,7 @@
   H.haptic = (ms = 8) => {
     try {
       if (navigator.vibrate) return void navigator.vibrate(ms);
-      if (!H.isIOS || !document.body) return;
+      if (!/iPhone/.test(navigator.userAgent) || !document.body) return; // iPads have no haptic engine
       if (!hapticLabel) {
         hapticLabel = document.createElement("label");
         hapticLabel.setAttribute("aria-hidden", "true");

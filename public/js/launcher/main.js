@@ -24,6 +24,11 @@
       H.$("#btn-settings").onclick = () => H.sheets.settings();
       H.$("#btn-done").onclick = () => H.home.setEditing(false);
       H.$("#btn-pages").onclick = () => H.sheets.pages();
+      H.$("#btn-select").onclick = () => H.home.setSelecting(true);
+      H.$("#sel-actions").addEventListener("click", (e) => {
+        const b = e.target.closest("[data-sel]");
+        if (b && !b.disabled) H.home.selAction(b.dataset.sel, b);
+      });
       H.$("#btn-undo").onclick = () => doUndo();
       H.$("#btn-add").onclick = (e) => {
         const r = e.currentTarget.getBoundingClientRect();
@@ -68,13 +73,14 @@
       e.preventDefault();
       return doUndo();
     }
-    if (H.ui.isOpen() || H.library.spotlightOpen() || H.folders.openId) return;
+    if (H.ui.isOpen() || H.library.spotlightOpen() || H.folders.openId || H.stages?.isOpen()) return;
     if (e.key === "/" && !mod) {
       e.preventDefault();
       return H.library.spotlight();
     }
     if (e.key === "ArrowRight") H.pager.next();
     if (e.key === "ArrowLeft") H.pager.prev();
+    if (e.key === "Escape" && H.home.selecting) return H.home.setSelecting(false);
     if (e.key === "Escape" && H.home.editing) H.home.setEditing(false);
   }
 

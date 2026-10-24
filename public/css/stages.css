@@ -1,0 +1,175 @@
+/* Ὁρμή — category stages (stages.js). Full-screen, one interaction per category. */
+.stage-layer {
+  position: fixed; inset: 0; z-index: 260; display: flex; flex-direction: column;
+  background: radial-gradient(ellipse at 18% 12%, color-mix(in srgb, var(--accent2) 16%, transparent), transparent 55%),
+    radial-gradient(ellipse at 85% 90%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 50%), #06080d; /* opaque: nothing behind needs painting */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  opacity: 0; transform: scale(1.04); transition: opacity 0.2s, transform var(--sheet-ms, 0.35s) var(--ease-sheet, var(--spring));
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; overscroll-behavior: contain;
+}
+/* stages that follow the finger take the whole gesture; the scrolling ones keep vertical scroll */
+.stg-shards, .stg-dial, .stg-orbit, .stg-drops, .stg-cards, .stg-map, .stg-head, .stg-hint { touch-action: none; }
+.stg-styles { touch-action: pan-x; }
+.stg-keys, .stg-switches, .stg-list { touch-action: pan-y; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.stage-layer.open { opacity: 1; transform: none; }
+.stg-head { flex: none; display: flex; align-items: center; gap: 14px; padding: 14px 16px 8px 22px; min-width: 0; }
+.stg-title { display: grid; flex: none; }
+.stg-title b { font-size: 26px; font-weight: 620; letter-spacing: -0.02em; }
+.stg-title small { color: var(--muted); font-size: 12.5px; }
+.stg-styles { flex: 1; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 4px 2px; mask-image: linear-gradient(90deg, #000 92%, transparent); }
+.stg-styles::-webkit-scrollbar { display: none; }
+.stg-styles button { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 13px; border-radius: 99px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--line); color: var(--sub); font-size: 13px; }
+.stg-styles button .g { width: 15px; height: 15px; }
+.stg-styles button.on { background: var(--accent); color: #10121b; border-color: transparent; font-weight: 650; }
+.stg-close, .stg-add { flex: none; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.05); }
+.stg-add { color: var(--sub); }
+.stg-body { position: relative; flex: 1; min-height: 0; margin: 4px 14px 0; overflow: hidden; border-radius: 24px; }
+.stg-hint { flex: none; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 10px; min-height: 44px; margin: 2px 12px 6px; text-align: center; font-size: 12.5px; color: var(--muted); }
+.stg-hint-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--line-strong); background: rgba(255, 255, 255, 0.07); color: var(--fg); font-size: 13px; }
+.stg-hint-btn .g { width: 15px; height: 15px; }
+.stg-ico { display: inline-grid; flex: none; }
+.stg-ico .icon { --sz: inherit; width: var(--sz); height: var(--sz); }
+.stage-layer.launching .stg-body > * { pointer-events: none; }
+@media (max-width: 700px) {
+  .stg-head { flex-wrap: wrap; padding: 10px 12px 6px 16px; }
+  .stg-styles { order: 3; flex-basis: 100%; }
+  .stg-add { margin-left: auto; }
+  .stg-body { margin: 4px 8px 0; border-radius: 18px; }
+}
+
+/* ===== 조각 ===== */
+.stg-shards { background: rgba(255, 255, 255, 0.02); }
+.shard-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.shard {
+  fill: hsl(var(--h) 38% 30% / 0.32); stroke: rgba(230, 236, 255, 0.55); stroke-width: 1.2; stroke-linejoin: round;
+  transition: fill 0.2s, opacity 0.3s, transform 0.45s var(--ease-pop, ease-out); transform-box: fill-box; transform-origin: center;
+  animation: shard-in 0.6s var(--ease-sheet, ease-out) backwards; animation-delay: var(--d);
+}
+.shard.hot { fill: hsl(var(--h) 55% 45% / 0.5); }
+.shard.picked { fill: hsl(var(--h) 70% 58% / 0.75); stroke: #fff; stroke-width: 2.4; transform: scale(1.04); }
+.stg-shards.chosen .shard:not(.picked) { opacity: 0.18; }
+.stg-shards.chosen .shard-label:not(.picked) { opacity: 0.2; }
+@keyframes shard-in { from { opacity: 0; transform: scale(0.86); } }
+.shard-label { position: absolute; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 5px; pointer-events: auto; text-align: center; animation: shard-label-in 0.5s var(--ease-pop, ease-out) backwards; animation-delay: var(--d); transition: opacity 0.3s, transform 0.4s var(--ease-pop, ease-out); }
+.shard-label b { font-size: 12.5px; font-weight: 560; color: #f0f2fb; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shard-label.picked { transform: translate(-50%, -50%) scale(1.22); }
+@keyframes shard-label-in { from { opacity: 0; transform: translate(-50%, -40%) scale(0.7); } }
+
+/* ===== 다이얼 ===== */
+.stg-dial { display: grid; place-items: center; }
+.dial { --D: 600px; position: relative; width: var(--D); height: var(--D); }
+.dial-ring { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, 0.02) 55%, rgba(255, 255, 255, 0.06) 56%, rgba(255, 255, 255, 0.02) 70%, rgba(255, 255, 255, 0.07) 71%); border: 1px solid var(--line-strong); will-change: transform; touch-action: none; }
+.dial-ticks { position: absolute; inset: 0; width: 100%; height: 100%; stroke: rgba(230, 236, 255, 0.35); stroke-width: 0.25; }
+.dial-item { position: absolute; left: 50%; top: 50%; transform: rotate(var(--a)) translateY(calc(var(--D) * -0.39)) rotate(calc(-1 * var(--a) - var(--rot, 0deg))); transform-origin: 0 0; margin: 0; }
+.dial-item .stg-ico { transform: translate(-50%, -50%); transition: transform 0.25s var(--ease-pop, ease-out), filter 0.25s; filter: saturate(0.7) brightness(0.8); }
+.dial-item.sel .stg-ico { transform: translate(-50%, -50%) scale(1.22); filter: none; }
+.dial-mark { position: absolute; left: 50%; top: -6px; width: 0; height: 0; border: 10px solid transparent; border-top-color: var(--accent); transform: translateX(-50%); filter: drop-shadow(0 0 8px var(--accent)); }
+.dial-center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: calc(var(--D) * 0.5); height: calc(var(--D) * 0.5); border-radius: 50%; display: grid; place-content: center; justify-items: center; gap: 10px; background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.1), rgba(10, 13, 22, 0.9) 70%); border: 1px solid var(--line-strong); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), inset 0 1px rgba(255, 255, 255, 0.12); text-align: center; }
+.dial-sel { display: grid; justify-items: center; gap: 4px; }
+.dial-sel b { font-size: 18px; }
+.dial-sel small { color: var(--muted); font-size: 12px; }
+@media (max-width: 700px) { .dial-sel .stg-ico { --sz: 64px !important; } .dial-sel b { font-size: 15px; } }
+
+/* ===== 궤도 ===== */
+.stg-orbit { display: grid; place-items: center; }
+.orbit-sys { position: relative; width: 100%; height: 100%; }
+.orbit-sun { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 120px; height: 120px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle, color-mix(in srgb, var(--accent) 70%, #fff) 0%, color-mix(in srgb, var(--accent) 35%, transparent) 45%, transparent 70%); }
+.orbit-sun b { font-size: clamp(11px, 2.4vmin, 15px); color: #10121b; font-weight: 700; }
+.orbit { position: absolute; left: 50%; top: 50%; width: 0; height: 0; animation: orbit-spin var(--dur) linear infinite; }
+.orbit.rev { animation-name: orbit-unspin; }
+.orbit::before { content: ""; position: absolute; left: calc(-1 * var(--r)); top: calc(-1 * var(--r)); width: calc(2 * var(--r)); height: calc(2 * var(--r)); border-radius: 50%; border: 1px dashed rgba(230, 236, 255, 0.16); pointer-events: none; }
+.planet { position: absolute; left: 0; top: 0; width: 0; height: 0; transform: rotate(var(--a)) translateY(calc(-1 * var(--r))) rotate(calc(-1 * var(--a))); }
+/* the planet turns back as its ring turns, so icons stay upright */
+.pl-in { position: absolute; left: 0; top: 0; width: 0; height: 0; animation: orbit-unspin var(--dur) linear infinite; }
+.orbit.rev .pl-in { animation-name: orbit-spin; }
+.pl-in .stg-ico { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); transition: filter 0.3s; }
+.pl-in b { position: absolute; left: 0; top: calc(var(--sz, 50px) / 2 + 5px); transform: translateX(-50%); font-size: 11.5px; color: var(--sub); white-space: nowrap; pointer-events: none; text-shadow: 0 1px 6px #000; }
+@keyframes orbit-spin { to { transform: rotate(360deg); } }
+@keyframes orbit-unspin { to { transform: rotate(-360deg); } }
+.stg-orbit.chosen .orbit, .stg-orbit.chosen .pl-in, body[data-power="saver"] .orbit, body[data-power="saver"] .pl-in, body:not([data-motion="on"]) .orbit, body:not([data-motion="on"]) .pl-in { animation-play-state: paused; }
+.stg-orbit.chosen .planet:not(.picked) { opacity: 0.25; transition: opacity 0.3s; }
+.planet.picked .stg-ico { filter: drop-shadow(0 0 18px var(--accent)); }
+.planet:hover .stg-ico { filter: drop-shadow(0 0 12px color-mix(in srgb, var(--accent) 60%, transparent)); }
+@media (prefers-reduced-motion: reduce) { .orbit, .pl-in { animation: none; } }
+
+/* ===== 물감 ===== */
+.stg-drops { background: rgba(255, 255, 255, 0.015); }
+.drop { position: absolute; left: 0; top: 0; width: calc(var(--r) * 2); height: calc(var(--r) * 2); border-radius: 50%; display: grid; place-items: center; will-change: transform; touch-action: none; cursor: grab;
+  background: radial-gradient(circle at 32% 28%, hsl(var(--h) 85% 82%) 0%, hsl(var(--h) 70% 58%) 34%, hsl(var(--h) 60% 34%) 78%); box-shadow: inset -8px -10px 24px rgba(0, 0, 0, 0.3), 0 14px 34px rgba(0, 0, 0, 0.35); }
+.drop .icon { --sz: calc(var(--r) * 0.9); background: none; border: 0; box-shadow: none; }
+.drop .icon::after { display: none; }
+.drop .icon.custom { border-radius: 50%; overflow: hidden; }
+.drop .icon > .g { width: 58%; height: 58%; color: #fff; filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.35)); }
+.drop b { position: absolute; top: 100%; margin-top: 4px; font-size: 11.5px; color: var(--sub); white-space: nowrap; pointer-events: none; }
+.drop.held { cursor: grabbing; box-shadow: inset -8px -10px 24px rgba(0, 0, 0, 0.3), 0 24px 50px rgba(0, 0, 0, 0.45); }
+.drop.picked { transition: transform 0.35s ease-out, opacity 0.35s; opacity: 0; scale: 2.2; }
+
+/* ===== 카드 ===== */
+.stg-cards { display: grid; grid-template-rows: 1fr auto; place-items: center; padding: 10px 0 14px; }
+.deck { position: relative; width: min(400px, 78vw); height: min(520px, 62dvh); }
+.card-app { position: absolute; inset: 0; border-radius: 30px; padding: 28px 24px; display: grid; justify-items: center; align-content: center; gap: 10px; text-align: center; touch-action: none;
+  background: linear-gradient(160deg, hsl(var(--h) 40% 30%), hsl(var(--h) 30% 12%)); border: 1px solid rgba(255, 255, 255, 0.14); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+  transition: transform 0.4s var(--ease-pop, ease-out), opacity 0.3s; will-change: transform; }
+.card-app[data-depth="1"] { transform: translateY(16px) scale(0.94) rotate(-3deg); opacity: 0.75; }
+.card-app[data-depth="2"] { transform: translateY(30px) scale(0.88) rotate(4deg); opacity: 0.45; }
+.card-app[data-depth="0"] { cursor: grab; }
+.card-app h2 { margin: 8px 0 0; font-size: 28px; letter-spacing: -0.02em; }
+.card-app p { margin: 0; color: var(--sub); font-size: 14px; }
+.card-open { margin-top: 18px; display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 99px; background: rgba(255, 255, 255, 0.12); font-size: 13.5px; }
+.card-open .g { width: 16px; height: 16px; }
+.card-app.picked { transform: scale(1.05); box-shadow: 0 0 0 3px var(--accent), 0 30px 80px rgba(0, 0, 0, 0.5); }
+.deck-nav { display: flex; align-items: center; gap: 16px; margin-top: 16px; }
+.deck-count { font-variant-numeric: tabular-nums; color: var(--sub); font-size: 14px; min-width: 64px; text-align: center; }
+
+/* ===== 키보드 ===== */
+.stg-keys { display: grid; place-items: center; padding: 12px; overflow-y: auto; }
+.keyboard { --cols: 6; width: min(1100px, 100%); display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: 12px; }
+.keycap { position: relative; height: 104px; border-radius: 16px; padding: 0; background: linear-gradient(180deg, #1b2030, #0c0f18); box-shadow: 0 7px 0 #06080d, 0 10px 18px rgba(0, 0, 0, 0.45); transition: transform 0.08s, box-shadow 0.08s; }
+.kc-top { position: absolute; inset: 5px 5px 9px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-width: 0; background: linear-gradient(160deg, hsl(var(--h, 230) 18% 28%), hsl(var(--h, 230) 16% 17%)); border: 1px solid rgba(255, 255, 255, 0.09); }
+.kc-top b { font-size: 12px; font-weight: 560; width: 100%; padding: 0 8px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kc-top small { color: var(--muted); font-size: 11px; }
+.kc-top kbd { position: absolute; left: 9px; top: 7px; font: 600 11px var(--font-mono); color: var(--muted); border: 0; padding: 0; }
+.keycap:active, .keycap.picked { transform: translateY(6px); box-shadow: 0 1px 0 #06080d, 0 2px 6px rgba(0, 0, 0, 0.4); }
+.keycap.hot .kc-top { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 60%, transparent), 0 0 24px color-mix(in srgb, var(--accent) 35%, transparent); }
+.keycap.space { grid-column: 1 / -1; height: 64px; }
+.keycap.space .kc-top { flex-direction: row; gap: 12px; }
+.keycap.space .kc-top b { width: auto; }
+@media (max-width: 700px) { .keyboard { --cols: 3 !important; gap: 9px; } .keycap { height: 92px; } }
+
+/* ===== 스위치 ===== */
+.stg-switches { overflow-y: auto; padding: 12px; }
+.board { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.sw-panel { position: relative; display: grid; justify-items: center; gap: 8px; padding: 16px 10px 14px; border-radius: 16px; background: linear-gradient(180deg, #1a1e2a, #10131c); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: inset 0 1px rgba(255, 255, 255, 0.06); }
+.sw-panel b { font: 600 12px var(--font-mono); letter-spacing: 0.02em; color: var(--sub); max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.led { position: absolute; right: 12px; top: 12px; width: 8px; height: 8px; border-radius: 50%; background: #2a2f3d; box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6); transition: background 0.15s, box-shadow 0.15s; }
+.toggle { position: relative; width: 58px; height: 30px; border-radius: 99px; background: #0a0c12; box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.7); }
+.toggle i { position: absolute; left: 3px; top: 3px; width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(180deg, #e9ecf5, #a9afc2); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5); transition: transform 0.22s var(--ease-pop, ease-out); }
+.sw-panel.on .toggle { background: hsl(var(--h) 60% 40%); }
+.sw-panel.on .toggle i { transform: translateX(28px); }
+.sw-panel.on .led { background: hsl(var(--h) 90% 62%); box-shadow: 0 0 10px hsl(var(--h) 90% 62%); }
+.screws::before, .screws::after { content: ""; position: absolute; top: 10px; width: 5px; height: 5px; border-radius: 50%; background: #2b303d; }
+.screws::before { left: 10px; }
+.screws::after { display: none; }
+
+/* ===== 지도 ===== */
+.stg-map { background: radial-gradient(ellipse at 40% 40%, rgba(60, 90, 80, 0.18), transparent 70%), #0a0f12; }
+.map-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.map-svg .contours path { fill: none; stroke: color-mix(in srgb, var(--accent2) 70%, #fff); stroke-width: 1; }
+.map-svg .road { fill: none; stroke: rgba(240, 230, 210, 0.16); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 2 10; }
+.pin { position: absolute; transform: translate(-50%, -100%); display: grid; justify-items: center; gap: 2px; animation: pin-drop 0.55s var(--ease-pop, ease-out) backwards; animation-delay: var(--d); }
+.pin-head { width: 52px; height: 52px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); display: grid; place-items: center; background: hsl(var(--h) 60% 50%); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45), inset 0 2px rgba(255, 255, 255, 0.3); }
+.pin-head .stg-ico { transform: rotate(45deg); }
+.pin-head .icon { border-radius: 50%; }
+.pin b { font-size: 11.5px; color: #e9edf7; text-shadow: 0 1px 6px #000; white-space: nowrap; margin-top: 4px; }
+.pin.picked .pin-head { box-shadow: 0 0 0 4px #fff, 0 0 34px hsl(var(--h) 80% 60%); }
+.stg-map.chosen .pin:not(.picked) { opacity: 0.3; transition: opacity 0.3s; }
+@keyframes pin-drop { from { opacity: 0; transform: translate(-50%, -160%); } }
+
+/* ===== 목록 ===== */
+.stg-list { overflow-y: auto; }
+.stg-list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 18px 8px; padding: 16px 12px; }
+.stg-row { display: grid; justify-items: center; gap: 8px; min-width: 0; padding: 6px 2px; font-size: 12.5px; }
+.stg-row b { font-weight: 500; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.stage-layer .picked { z-index: 2; }
+@media (prefers-reduced-motion: reduce) { .shard, .shard-label, .pin { animation: none; } }

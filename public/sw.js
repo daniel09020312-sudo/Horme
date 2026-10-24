@@ -1,7 +1,7 @@
 /* Ὁρμή service worker — offline shell + update flow.
    Pages: network first (so new versions arrive), cached copy when offline.
    Static files: cached first, refreshed in the background. */
-const VERSION = "horme-2.2.0-0997d874e9";
+const VERSION = "horme-2.3.0-4dc313bdd1";
 const SHELL = [
  "./",
  "./index.html",
@@ -10,6 +10,7 @@ const SHELL = [
  "./manifest.webmanifest",
  "./css/base.css",
  "./css/launcher.css",
+ "./css/stages.css",
  "./css/studio.css",
  "./css/widgets.css",
  "./js/core/assets.js",
@@ -33,6 +34,7 @@ const SHELL = [
  "./js/launcher/main.js",
  "./js/launcher/pager.js",
  "./js/launcher/sheets.js",
+ "./js/launcher/stages.js",
  "./js/launcher/standby.js",
  "./js/studio/prompts.js",
  "./js/studio/studio.js",

@@ -6,7 +6,7 @@
   "use strict";
   const H = window.H;
 
-  H.CATEGORIES = ["생산성", "공부", "크리에이티브", "엔터테인먼트", "소셜", "유틸리티", "생활"];
+  H.CATEGORIES = ["생산성", "공부", "크리에이티브", "엔터테인먼트", "게임", "소셜", "유틸리티", "생활"];
 
   const A = (id, name, glyph, category, app, web, aliases = []) => ({ id, name, glyph, category, app, web, aliases });
 
@@ -97,6 +97,15 @@
     A("duolingo", "Duolingo", "leaf", "공부", "", "https://www.duolingo.com/", ["듀오링고", "영어"]),
     A("wikipedia", "위키백과", "book", "공부", "", "https://ko.wikipedia.org/", ["wikipedia", "위키"]),
     A("namuwiki", "나무위키", "leaf", "공부", "", "https://namu.wiki/", ["나무위키", "위키"]),
+    A("roblox", "Roblox", "blocks", "게임", "roblox://", "https://www.roblox.com/", ["로블록스", "로블"]),
+    A("minecraft", "Minecraft", "layers", "게임", "minecraft://", "https://www.minecraft.net/", ["마인크래프트", "마크"]),
+    A("brawlstars", "브롤스타즈", "star", "게임", "", "https://supercell.com/en/games/brawlstars/", ["brawl stars", "브롤"]),
+    A("clashroyale", "클래시 로얄", "bolt", "게임", "", "https://supercell.com/en/games/clashroyale/", ["clash royale", "클로"]),
+    A("genshin", "원신", "sparkle", "게임", "", "https://genshin.hoyoverse.com/ko/", ["genshin", "원신 임팩트"]),
+    A("cookierun", "쿠키런: 킹덤", "heart", "게임", "", "https://www.cookierun-kingdom.com/", ["쿠키런", "cookie run"]),
+    A("pokemongo", "Pokémon GO", "aperture", "게임", "", "https://pokemongolive.com/", ["포켓몬고", "포켓몬 go"]),
+    A("chesscom", "Chess.com", "target", "게임", "", "https://www.chess.com/", ["체스", "chess"]),
+    A("steam", "Steam", "gamepad", "게임", "", "https://store.steampowered.com/", ["스팀"]),
     A("toss", "토스", "wallet", "생활", "supertoss://", "https://toss.im/", ["toss", "송금"]),
     A("coupang", "쿠팡", "cart", "생활", "", "https://www.coupang.com/", ["coupang", "쇼핑"]),
     A("baemin", "배달의민족", "food", "생활", "", "https://www.baemin.com/", ["배민", "배달"]),

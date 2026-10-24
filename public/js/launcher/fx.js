@@ -178,7 +178,8 @@
           });
       }
     } else if (e.pointerType === "mouse" && !e.buttons) hover(e);
-    if (dock.active && e.pointerId === dock.id) dockMove(e.clientX);
+    if (dock.active && document.body.classList.contains("dragging")) dockEnd(); // an icon drag took over
+    else if (dock.active && e.pointerId === dock.id) dockMove(e.clientX);
     else if (!dock.active && (e.pointerType === "mouse" || e.pointerType === "pen") && !e.buttons) {
       const over = e.target.closest?.("#dock");
       if (over) dockHover(e);
@@ -254,6 +255,8 @@
     dock.items = [];
   }
 
+  fx.dockEnd = () => (dock.active || dock.hover) && dockEnd();
+
   /* ---------- launch pop ---------- */
   fx.launch = (tile) => {
     if (!tile || fx.reduced()) return;
@@ -280,17 +283,27 @@
       });
     });
   };
-  /* x = track position (px), v = its velocity (px/s) */
+  const JELLY_TILES = ":scope > .grid > .tile.app, :scope > .grid > .tile.folder";
+  const jellyOf = (v) => Math.max(-38, Math.min(38, -v * 0.02));
+  /* the look of a page `p` screens away from the centre (p = 0 centred, ±1 one screen away) */
+  function pageStyle(mode, p, w) {
+    const q = Math.max(-1, Math.min(1, p));
+    const a = Math.abs(q);
+    if (mode === "depth") return { transform: `perspective(1600px) rotateY(${(q * -22).toFixed(2)}deg) scale(${(1 - a * 0.16).toFixed(4)})`, opacity: (1 - a * 0.55).toFixed(3) };
+    // cube: hinge on the edge shared with the centre page (written as translate-rotate-translate so it
+    // interpolates smoothly when the page swings past the centre)
+    const h = (q >= 0 ? -w : w) / 2;
+    return { transform: `perspective(1300px) translateX(${h.toFixed(1)}px) rotateY(${(q * 90).toFixed(2)}deg) translateX(${(-h).toFixed(1)}px)`, opacity: (1 - Math.max(0, a - 0.6) * 1.2).toFixed(3) };
+  }
+  /* finger-driven frame: x = track position (px), v = its velocity (px/s) */
   fx.pageFx = (x, v, w) => {
     H.bg?.parallax(x, w);
     const mode = fx.pageMode();
     if (mode === "slide") return;
-    const pages = H.$$("#track > .page");
-    const jx = mode === "jelly" ? Math.max(-38, Math.min(38, -v * 0.02)) : 0;
-    pages.forEach((pg, i) => {
-      const p = (i * w + x) / w; // 0 = centred, ±1 = one screen away
-      const ap = Math.abs(p);
-      if (ap >= 0.999) {
+    const jx = jellyOf(v);
+    H.$$("#track > .page").forEach((pg, i) => {
+      const p = (i * w + x) / w;
+      if (Math.abs(p) >= 0.999) {
         if (styled.has(pg)) clearPage(pg);
         return;
       }
@@ -301,14 +314,10 @@
           grid.style.setProperty("--jxp", Math.max(0, jx).toFixed(2) + "px");
           grid.style.setProperty("--jxn", Math.min(0, jx).toFixed(2) + "px");
         }
-      } else if (mode === "depth") {
-        pg.style.transformOrigin = "50% 50%";
-        pg.style.transform = `perspective(1600px) rotateY(${(p * -22).toFixed(2)}deg) scale(${(1 - ap * 0.16).toFixed(4)})`;
-        pg.style.opacity = (1 - ap * 0.55).toFixed(3);
-      } else if (mode === "cube") {
-        pg.style.transformOrigin = p > 0 ? "0% 50%" : "100% 50%";
-        pg.style.transform = `perspective(1300px) rotateY(${(p * 90).toFixed(2)}deg)`;
-        pg.style.opacity = (1 - Math.max(0, ap - 0.6) * 1.2).toFixed(3);
+      } else {
+        const st = pageStyle(mode, p, w);
+        pg.style.transform = st.transform;
+        pg.style.opacity = st.opacity;
       }
     });
   };
@@ -316,7 +325,6 @@
     styled.delete(pg);
     pg.style.transform = "";
     pg.style.opacity = "";
-    pg.style.transformOrigin = "";
     const grid = pg.firstElementChild;
     grid?.style.removeProperty("--jxp");
     grid?.style.removeProperty("--jxn");
@@ -324,6 +332,85 @@
   fx.pageRest = () => {
     styled.forEach(clearPage);
     styled = new Set();
+  };
+
+  /* ---------- compositor-driven settle ----------
+     When the finger lets go, the spring is simulated once, ahead of time, and handed to the browser
+     as Web Animations keyframes. The browser plays them on its compositor thread, so the page glides
+     at the display's own rate even if JavaScript is busy (saving, drawing, a timer firing).
+     Every effect (jelly, depth, cube, background parallax) gets keyframes from the same trajectory,
+     so they stay in lockstep. Touching the page again stops it exactly where it is. */
+  fx.simulate = (x0, v0, to, k = 230, zeta = 0.82) => {
+    const c = 2 * Math.sqrt(k) * zeta;
+    let x = x0;
+    let v = v0;
+    let t = 0;
+    const out = [[0, x0, v0]];
+    const h = 1 / 240;
+    for (let n = 1; t < 3; n++) {
+      const a = -k * (x - to) - c * v;
+      v += a * h;
+      x += v * h;
+      t += h;
+      if (n % 4 === 0) out.push([t, x, v]); // a keyframe every 1/60 s
+      if (Math.abs(x - to) < 0.5 && Math.abs(v) < 12) break;
+    }
+    out.push([t + 1 / 60, to, 0]);
+    return { samples: out, T: t + 1 / 60 };
+  };
+  const WAAPI = typeof Element !== "undefined" && typeof Element.prototype.animate === "function";
+  fx.settle = ({ track, x0, v0, to, w, k, zeta, onDone }) => {
+    if (!WAAPI) return null;
+    const sim = fx.simulate(x0, v0, to, k, zeta);
+    const T = sim.T;
+    const opts = { duration: T * 1000, easing: "linear", fill: "forwards" };
+    const frames = (fn) => sim.samples.map(([t, x, v]) => ({ offset: Math.min(1, t / T), ...fn(x, v) }));
+    const anims = [track.animate(frames((x) => ({ transform: `translate3d(${x.toFixed(2)}px,0,0)` })), opts)];
+    const mode = fx.pageMode();
+    if (mode !== "slide")
+      H.$$("#track > .page").forEach((pg, i) => {
+        const near = sim.samples.some(([, x]) => Math.abs((i * w + x) / w) < 0.999);
+        if (!near) return;
+        if (mode === "jelly") {
+          pg.querySelectorAll(JELLY_TILES).forEach((tile) => {
+            const cl = parseFloat(tile.style.getPropertyValue("--cl")) || 0;
+            anims.push(tile.animate(frames((x, v) => {
+              const jx = jellyOf(v);
+              return { transform: `translate3d(${(jx > 0 ? jx * cl : jx * (1 - cl)).toFixed(2)}px,0,0)` };
+            }), opts));
+          });
+        } else anims.push(pg.animate(frames((x) => pageStyle(mode, (i * w + x) / w, w)), opts));
+      });
+    const par = H.bg?.parallaxPlan?.(w);
+    if (par) par.els.forEach((el) => anims.push(el.animate(frames((x) => ({ transform: `translate3d(${par.at(x).toFixed(2)}px,0,0)` })), opts)));
+    let done = false;
+    const at = () => {
+      const ms = Math.max(0, Math.min(T * 1000, Number(anims[0].currentTime) || 0)) / 1000;
+      const sm = sim.samples;
+      let i = 1;
+      while (i < sm.length - 1 && sm[i][0] < ms) i++;
+      const [t0, x0_, v0_] = sm[i - 1];
+      const [t1, x1, v1] = sm[i];
+      const f = t1 > t0 ? Math.max(0, Math.min(1, (ms - t0) / (t1 - t0))) : 1;
+      return { x: x0_ + (x1 - x0_) * f, v: v0_ + (v1 - v0_) * f };
+    };
+    const end = () => anims.forEach((a) => a.cancel());
+    anims[0].onfinish = () => {
+      if (done) return;
+      done = true;
+      onDone?.(end);
+    };
+    return {
+      now: at,
+      to,
+      /* stop where it is; returns {x, v}. The caller paints that position before calling end(). */
+      stop() {
+        if (done) return null;
+        done = true;
+        const p = at();
+        return { ...p, end };
+      },
+    };
   };
 
   fx.init = () => {

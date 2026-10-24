@@ -1,7 +1,7 @@
 /* Ὁρμή service worker — offline shell + update flow.
    Pages: network first (so new versions arrive), cached copy when offline.
    Static files: cached first, refreshed in the background. */
-const VERSION = "horme-2.2.0-__HASH__";
+const VERSION = "horme-2.3.0-__HASH__";
 const SHELL = __FILES__;
 
 self.addEventListener("install", (e) => {

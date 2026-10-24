@@ -37,7 +37,7 @@
     tagline: "A space made yours.",
   });
   const defaultBg = () => ({ mode: "ambient", shade: 0.35, blur: 0, particles: true, fit: "cover", speed: 1, dim: 0.35, videoUrl: "" });
-  const defaultPrefs = () => ({ hour12: false, openWeb: "auto", search: "google", installHint: true, confirmDelete: true, power: "auto", oled: false, fx: defaultFx() });
+  const defaultPrefs = () => ({ hour12: false, openWeb: "auto", search: "google", installHint: true, confirmDelete: true, power: "auto", oled: false, fx: defaultFx(), stages: {} });
   const defaultFx = () => ({ page: "jelly", bounce: "mid", touch: true, tilt: true, parallax: true, magnify: true });
 
   function defaults() {
@@ -209,6 +209,14 @@
       confirmDelete: p.confirmDelete !== false,
       power: H.oneOf(p.power, ["auto", "saver", "normal", "smooth"], "auto"),
       oled: !!p.oled,
+      stages: (() => {
+        const o = {};
+        const st = p.stages && typeof p.stages === "object" ? p.stages : {};
+        H.CATEGORIES.forEach((c) => {
+          if (typeof st[c] === "string" && /^(shards|dial|orbit|drops|cards|switches|map|keys|list)$/.test(st[c])) o[c] = st[c];
+        });
+        return o;
+      })(),
       fx: (() => {
         const f = p.fx && typeof p.fx === "object" ? p.fx : {};
         return {

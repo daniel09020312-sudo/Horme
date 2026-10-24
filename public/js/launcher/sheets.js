@@ -280,7 +280,7 @@
   /* ================= Pages ================= */
   sheets.pages = () => {
     let off = null;
-    const s = H.ui.sheet({ title: "페이지 관리", sub: "순서를 바꾸거나 빈 페이지를 지울 수 있어요.", size: "sm", cls: "pages-sheet", foot: `<button type="button" class="btn primary" data-new>${H.svg("plus")} 새 페이지</button>`, onClose: () => off?.() });
+    const s = H.ui.sheet({ title: "페이지 관리", sub: "순서를 바꾸거나 페이지를 지울 수 있어요. 빈 페이지는 편집을 마치면 저절로 정리돼요.", size: "sm", cls: "pages-sheet", foot: `<button type="button" class="btn primary" data-new>${H.svg("plus")} 새 페이지</button>`, onClose: () => off?.() });
     const draw = () => {
       const st = S();
       s.body.innerHTML = `<ol class="page-list">${st.pages
@@ -292,7 +292,7 @@
             <button type="button" class="icon-btn" data-down="${i}" ${i === st.pages.length - 1 ? "disabled" : ""} aria-label="아래로">${H.svg("chevronD")}</button>
             <button type="button" class="icon-btn danger" data-del="${i}" ${st.pages.length === 1 ? "disabled" : ""} aria-label="삭제">${H.svg("trash")}</button></li>`;
         })
-        .join("")}</ol>`;
+        .join("")}</ol>${st.pages.length > 1 && st.pages.some((p) => !p.items.length) ? `<button type="button" class="btn ghost wide" data-prune>${H.svg("trash")} 빈 페이지 모두 지우기</button>` : ""}`;
     };
     draw();
     off = H.listen("change", () => draw());
@@ -306,23 +306,8 @@
       const move = (i, j) => H.store.commit((st) => st.pages.splice(j, 0, st.pages.splice(i, 1)[0]), { label: "페이지 순서" });
       if (b.dataset.up) move(Number(b.dataset.up), Number(b.dataset.up) - 1);
       if (b.dataset.down) move(Number(b.dataset.down), Number(b.dataset.down) + 1);
-      if (b.dataset.del) {
-        const i = Number(b.dataset.del);
-        const p = S().pages[i];
-        if (p.items.length) {
-          const ok = await H.ui.confirm({ title: `홈 화면 ${i + 1} 삭제`, msg: "이 페이지의 앱은 앱 보관함으로 옮겨지고, 위젯은 지워져요.", ok: "삭제", danger: true });
-          if (!ok) return;
-        }
-        H.store.commit((st) => {
-          const [pg] = st.pages.splice(i, 1);
-          pg.items.forEach((k) => {
-            if (k[0] === "w") delete st.widgets[k.slice(2)];
-            if (k[0] === "f") delete st.folders[k.slice(2)];
-          });
-          st.page = H.clamp(st.page, 0, st.pages.length);
-        }, { label: "페이지 삭제" });
-        H.ui.toast("페이지를 삭제했어요.", { action: { label: "되돌리기", fn: () => H.store.undo() } });
-      }
+      if (b.dataset.del) H.home.deletePage(Number(b.dataset.del));
+      if (b.hasAttribute("data-prune")) H.home.pruneEmptyPages();
     });
     s.foot.querySelector("[data-new]").onclick = () => {
       if (S().pages.length >= H.schema.MAX_PAGES) return H.ui.toast(`페이지는 ${H.schema.MAX_PAGES}개까지 만들 수 있어요.`);
@@ -351,9 +336,9 @@
         <h3 class="form-h">움직임 · 효과</h3>
         <div class="field"><span>페이지 넘김</span>${H.ui.seg("fx-page", [["jelly", "젤리"], ["slide", "기본"], ["depth", "깊이"], ["cube", "큐브"]], st.prefs.fx.page)}<small>젤리: 넘길 때 아이콘이 열마다 살짝 늦게 따라와요 · 깊이: 뒤로 물러나며 돌아요 · 큐브: 정육면체처럼 돌아요</small></div>
         <div class="field"><span>쫀득함</span>${H.ui.seg("fx-bounce", [["soft", "담백하게"], ["mid", "보통"], ["chewy", "쫀득하게"]], st.prefs.fx.bounce)}<small>페이지·아이콘·창이 멈출 때 튕기는 정도예요.</small></div>
-        ${H.ui.switch("set-fx-touch", st.prefs.fx.touch, "손끝 반응 배경", "누른 곳에서 빛이 퍼지고, 손가락을 따라 입자가 비켜나요.")}
+        ${H.ui.switch("set-fx-touch", st.prefs.fx.touch, "손끝 반응 배경", "누른 곳에서 빛의 물결이 퍼지고 입자가 밀려나요.")}
         ${H.ui.switch("set-fx-tilt", st.prefs.fx.tilt, "아이콘 기울기 · 빛 반사", "누르는 쪽으로 아이콘이 기울고 빛이 손끝을 따라와요. 트랙패드로 올리면 살짝 떠올라요.")}
-        ${H.ui.switch("set-fx-parallax", st.prefs.fx.parallax, "배경 깊이감", "페이지를 넘기면 배경이 더 느리게, 입자는 더 빠르게 따라와요.")}
+        ${H.ui.switch("set-fx-parallax", st.prefs.fx.parallax, "배경 깊이감", "페이지를 넘기면 배경이 아이콘보다 느리게 따라와요.")}
         ${H.ui.switch("set-fx-magnify", st.prefs.fx.magnify, "Dock 확대", "Dock 위를 손가락으로 쓸거나 트랙패드로 올리면 아이콘이 커져요.")}
         <h3 class="form-h">배터리</h3>
         <div class="field"><span>전원 모드</span>${H.ui.seg("power", [["auto", "자동"], ["saver", "절전"], ["normal", "기본"], ["smooth", "부드럽게"]], st.prefs.power)}<div class="power-status" data-power-status></div></div>
