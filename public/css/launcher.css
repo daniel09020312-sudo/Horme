@@ -291,6 +291,32 @@ body.on-library .dock { opacity: 0.94; }
 .az { position: sticky; top: -14px; z-index: 2; display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 0; background: linear-gradient(#1c2030 70%, transparent); }
 .az button { min-width: 34px; height: 30px; border-radius: 8px; font-size: 13px; color: var(--sub); background: rgba(255, 255, 255, 0.05); }
 .az-head { margin: 14px 4px 4px; font-size: 13px; color: var(--muted); font-weight: 600; }
+/* 전체 목록: rows you can push left to delete */
+.all-sheet .rows { display: grid; gap: 2px; }
+.swipe-row { position: relative; border-radius: 16px; overflow: hidden; transition: height 0.22s ease, opacity 0.22s ease; }
+.swipe-row.gone { height: 0 !important; opacity: 0; }
+.row-del { position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end; gap: 7px; padding-right: 24px; border-radius: 16px; background: #c9373e; color: #fff; font-size: 14px; font-weight: 650; opacity: 0; transition: background 0.15s; }
+.row-del .g { width: 18px; height: 18px; }
+.swipe-row.open .row-del, .swipe-row.swiping .row-del, .swipe-row.gone .row-del { opacity: 1; }
+.swipe-row.armed .row-del { background: #ef4850; }
+.swipe-front { position: relative; display: flex; align-items: center; border-radius: 16px; touch-action: pan-y; transition: transform var(--sheet-ms, 0.3s) var(--ease-sheet, var(--ease)); }
+.swipe-row.open .swipe-front, .swipe-row.swiping .swipe-front, .swipe-row.gone .swipe-front { background: #1a1e2c; }
+.swipe-front .tile.app.row { flex: 1; min-width: 0; }
+.row-check { display: none; flex: none; width: 26px; height: 26px; margin-left: 8px; border-radius: 50%; place-items: center; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.55); color: transparent; }
+.row-check .g { width: 15px; height: 15px; stroke-width: 2.6; }
+.all-sheet.picking .row-check { display: grid; }
+.all-sheet.picking .swipe-row.picked .row-check { background: var(--accent); box-shadow: none; color: #10121b; }
+.all-sheet.picking .swipe-row.picked .tile.app.row { background: rgba(255, 255, 255, 0.06); }
+.all-sheet.picking .row-chev { display: none; }
+.row-trash { display: none; flex: none; color: var(--danger); }
+.row-trash .g { width: 18px; height: 18px; }
+@media (hover: hover) and (pointer: fine) {
+  .row-trash { display: grid; opacity: 0; transition: opacity 0.15s; }
+  .swipe-row:hover .row-trash, .row-trash:focus-visible { opacity: 1; }
+  .row-trash:hover { background: rgba(255, 120, 120, 0.14); }
+}
+.all-sheet.picking .row-trash { display: none; }
+.all-sheet .sheet-foot .btn[data-del-picked]:disabled { opacity: 0.45; }
 
 /* ---------- folder overlay ---------- */
 .folder-layer { position: fixed; inset: 0; z-index: 150; display: grid; place-items: center; padding: 20px; }

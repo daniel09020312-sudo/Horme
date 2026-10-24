@@ -1,7 +1,7 @@
 /* Ὁρμή service worker — offline shell + update flow.
    Pages: network first (so new versions arrive), cached copy when offline.
    Static files: cached first, refreshed in the background. */
-const VERSION = "horme-2.3.0-4dc313bdd1";
+const VERSION = "horme-2.3.0-a47046e8c3";
 const SHELL = [
  "./",
  "./index.html",

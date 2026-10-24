@@ -113,30 +113,182 @@
     };
   }
 
+  /* ---------- 전체 목록: every app A–Z, quick delete ----------
+     Touch: push a row to the left → 삭제 appears (push all the way to delete at once).
+     Mouse: a trash button shows on hover. Keyboard: Delete on a focused row.
+     선택: tick several apps and delete them together. Every delete can be undone. */
   function openAll() {
-    const apps = Object.values(S().apps).sort((a, b) => a.name.localeCompare(b.name, "ko"));
-    const groups = {};
-    apps.forEach((a) => {
-      const ch = H.chosung(a.name[0] || "#");
-      const k = /[ㄱ-ㅎ]/.test(ch) ? ch : /[a-z]/i.test(ch) ? ch.toUpperCase() : "#";
-      (groups[k] = groups[k] || []).push(a);
-    });
-    const order = Object.keys(groups).sort((a, b) => a.localeCompare(b, "ko"));
+    let picking = false;
+    const picked = new Set();
+    let off = null;
+    let openRow = null;
+    let sw = null;
+    let swallow = 0;
     const s = H.ui.sheet({
       title: "모든 앱",
-      sub: `${apps.length}개 · 가나다 / ABC 순`,
+      sub: " ",
       size: "md",
-      body: `<nav class="az">${order.map((k) => `<button type="button" data-az="${k}">${k}</button>`).join("")}</nav>${order.map((k) => `<h3 class="az-head" id="az-${k}">${k}</h3><div class="rows">${groups[k].map(rowHTML).join("")}</div>`).join("")}`,
+      cls: "all-sheet",
+      foot: `<button type="button" class="btn" data-pick>${H.svg("check")}<span>선택</span></button><span class="spacer"></span><button type="button" class="btn danger" data-del-picked hidden>${H.svg("trash")}<span>삭제</span></button>`,
+      onClose: () => off?.(),
     });
-    s.body.addEventListener("click", (e) => {
-      const az = e.target.closest("[data-az]");
-      if (az) return s.body.querySelector(`#az-${CSS.escape(az.dataset.az)}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
-      const t = e.target.closest(".tile.app");
-      if (t) {
-        s.close();
-        H.launch.app(S().apps[t.dataset.key.slice(2)]);
+    const sub = s.el.querySelector(".sheet-head p");
+    const swipeRow = (a) => `<div class="swipe-row" data-id="${H.esc(a.id)}">
+      <button type="button" class="row-del" data-del="${H.esc(a.id)}" tabindex="-1" aria-hidden="true">${H.svg("trash")}<span>삭제</span></button>
+      <div class="swipe-front"><span class="row-check" aria-hidden="true">${H.svg("check")}</span>${rowHTML(a)}<button type="button" class="icon-btn row-trash" data-del="${H.esc(a.id)}" aria-label="${H.esc(a.name)} 삭제">${H.svg("trash")}</button></div></div>`;
+    const draw = () => {
+      const apps = Object.values(S().apps).sort((a, b) => a.name.localeCompare(b.name, "ko"));
+      const groups = {};
+      apps.forEach((a) => {
+        const ch = H.chosung(a.name[0] || "#");
+        const k = /[ㄱ-ㅎ]/.test(ch) ? ch : /[a-z]/i.test(ch) ? ch.toUpperCase() : "#";
+        (groups[k] = groups[k] || []).push(a);
+      });
+      const order = Object.keys(groups).sort((a, b) => a.localeCompare(b, "ko"));
+      [...picked].forEach((id) => !S().apps[id] && picked.delete(id));
+      if (sub) sub.textContent = picking ? "지울 앱을 눌러 고르세요" : `${apps.length}개 · 가나다 / ABC 순 · ${H.isMobileOS || matchMedia("(hover: none)").matches ? "왼쪽으로 밀면 삭제" : "줄에 올리면 삭제 버튼"}`;
+      const top = s.body.scrollTop;
+      s.body.innerHTML = apps.length
+        ? `<nav class="az">${order.map((k) => `<button type="button" data-az="${k}">${k}</button>`).join("")}</nav>${order.map((k) => `<h3 class="az-head" id="az-${k}">${k}</h3><div class="rows">${groups[k].map(swipeRow).join("")}</div>`).join("")}`
+        : '<p class="muted center">앱이 없어요. 앱 보관함의 ‘앱 추가’로 더해 보세요.</p>';
+      s.body.scrollTop = top;
+      openRow = null;
+      syncPick();
+    };
+    function syncPick() {
+      s.el.classList.toggle("picking", picking);
+      s.body.querySelectorAll(".swipe-row").forEach((r) => r.classList.toggle("picked", picked.has(r.dataset.id)));
+      const pick = s.foot.querySelector("[data-pick]");
+      pick.querySelector("span").textContent = picking ? "취소" : "선택";
+      const del = s.foot.querySelector("[data-del-picked]");
+      del.hidden = !picking;
+      del.disabled = !picked.size;
+      del.querySelector("span").textContent = picked.size ? `${picked.size}개 삭제` : "삭제";
+    }
+    const front = (row) => row?.querySelector(".swipe-front");
+    const REVEAL = 96;
+    function slide(row, x, animate = true) {
+      const f = front(row);
+      if (!f) return;
+      f.style.transition = animate ? "" : "none";
+      f.style.transform = x ? `translate3d(${x}px,0,0)` : "";
+      row.classList.toggle("open", x !== 0);
+    }
+    function closeOpen() {
+      if (openRow) slide(openRow, 0);
+      openRow = null;
+    }
+    function remove(id) {
+      const row = s.body.querySelector(`.swipe-row[data-id="${CSS.escape(id)}"]`);
+      const go = () => H.home.deleteKeys(["a:" + id]);
+      if (!row || H.reducedMotion()) return go();
+      row.style.height = row.offsetHeight + "px";
+      slide(row, -row.offsetWidth);
+      requestAnimationFrame(() => row.classList.add("gone"));
+      H.haptic(10);
+      setTimeout(go, 230);
+    }
+    draw();
+    off = H.listen("change", () => draw());
+
+    /* swipe a row */
+    s.body.addEventListener("pointerdown", (e) => {
+      if (picking || e.pointerType === "mouse" || e.button !== 0) return;
+      const f = e.target.closest(".swipe-front");
+      if (!f) return closeOpen();
+      const row = f.parentElement;
+      if (openRow && openRow !== row) closeOpen();
+      sw = { row, id: e.pointerId, x0: e.clientX, y0: e.clientY, base: row === openRow ? -REVEAL : 0, x: 0, dir: null };
+    });
+    s.body.addEventListener("pointermove", (e) => {
+      if (!sw || e.pointerId !== sw.id) return;
+      const dx = e.clientX - sw.x0;
+      const dy = e.clientY - sw.y0;
+      if (!sw.dir) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < 8) return;
+        sw.dir = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+        if (sw.dir === "y") return void (sw = null);
+        try {
+          front(sw.row).setPointerCapture(e.pointerId);
+        } catch (err) {}
+        sw.row.classList.add("swiping");
+      }
+      const w = sw.row.offsetWidth;
+      let x = sw.base + dx;
+      if (x > 0) x = x * 0.2; // a little resistance to the right
+      x = Math.max(-w, x);
+      sw.x = x;
+      slide(sw.row, x, false);
+      const armed = x < -w * 0.55;
+      if (armed !== sw.row.classList.contains("armed")) {
+        sw.row.classList.toggle("armed", armed);
+        if (armed) H.haptic(6);
       }
     });
+    const end = (e) => {
+      if (!sw || e.pointerId !== sw.id) return;
+      const g = sw;
+      sw = null;
+      if (g.dir !== "x") return;
+      swallow = Date.now() + 400; // this was a swipe, not a tap
+      g.row.classList.remove("swiping", "armed");
+      const w = g.row.offsetWidth;
+      if (e.type !== "pointercancel" && g.x < -w * 0.55) return remove(g.row.dataset.id);
+      if (g.x < -REVEAL / 2) {
+        slide(g.row, -REVEAL);
+        openRow = g.row;
+      } else {
+        slide(g.row, 0);
+        if (openRow === g.row) openRow = null;
+      }
+    };
+    s.body.addEventListener("pointerup", end);
+    s.body.addEventListener("pointercancel", end);
+
+    s.body.addEventListener("click", (e) => {
+      if (Date.now() < swallow) {
+        e.preventDefault();
+        return;
+      }
+      const az = e.target.closest("[data-az]");
+      if (az) return s.body.querySelector(`#az-${CSS.escape(az.dataset.az)}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      const del = e.target.closest("[data-del]");
+      if (del) return remove(del.dataset.del);
+      const t = e.target.closest(".tile.app");
+      if (!t) return closeOpen();
+      const id = t.dataset.key.slice(2);
+      if (picking) {
+        picked.has(id) ? picked.delete(id) : picked.add(id);
+        H.haptic(4);
+        return syncPick();
+      }
+      if (openRow) return closeOpen(); // a tap closes the open row first
+      s.close();
+      H.launch.app(S().apps[id]);
+    });
+    s.body.addEventListener("keydown", (e) => {
+      if (e.key !== "Delete" && e.key !== "Backspace") return;
+      const t = e.target.closest?.(".tile.app.row");
+      if (!t) return;
+      e.preventDefault();
+      const next = t.closest(".swipe-row")?.nextElementSibling?.dataset.id;
+      remove(t.dataset.key.slice(2));
+      // the list is redrawn after the delete: focus the row that took its place
+      setTimeout(() => next && s.body.querySelector(`.swipe-row[data-id="${CSS.escape(next)}"] .tile.app.row`)?.focus(), 320);
+    });
+    s.foot.querySelector("[data-pick]").onclick = () => {
+      picking = !picking;
+      picked.clear();
+      closeOpen();
+      syncPick();
+    };
+    s.foot.querySelector("[data-del-picked]").onclick = () => {
+      if (!picked.size) return;
+      const keys = [...picked].map((id) => "a:" + id);
+      picking = false;
+      picked.clear();
+      H.home.deleteKeys(keys);
+    };
   }
 
   lib.init = () => {

@@ -366,8 +366,9 @@
   home.deleteKeys = (keys) => {
     if (!keys.length) return;
     const folders = keys.filter((k) => k[0] === "f").length;
+    const one = keys.length === 1 && keys[0][0] === "a" ? S().apps[keys[0].slice(2)] : null;
     H.store.commit((s) => mutate.del(s, keys), { label: "삭제" });
-    undoToast(`${count(keys)}를 삭제했어요.${folders ? " 폴더 속 앱은 보관함에 남겨 뒀어요." : ""}`);
+    undoToast(one ? `‘${one.name}’을(를) 삭제했어요.` : `${count(keys)}를 삭제했어요.${folders ? " 폴더 속 앱은 보관함에 남겨 뒀어요." : ""}`);
   };
   home.moveKeys = (keys, page) => {
     if (!keys.length) return;
